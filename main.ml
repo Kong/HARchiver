@@ -58,6 +58,17 @@ let make_server port () =
 	let _ = Lwt_io.printf "Server listening on port %n\n" port in
 	Server.create ~ctx ~mode config
 
-let port = 15001
+let start port key () = Lwt_unix.run (make_server port ())
 
-let _ = Lwt_unix.run (make_server port ())
+let command =
+	Command.basic
+		~summary:"Transparent analytics layer for apianalytics.com"
+		~readme:(fun () -> "Made to be portable, fast and transparent. It lets HTTP traffic through and streams datapoints to apianalytics.com.")
+		Command.Spec.(
+			empty
+			+> anon ("port" %: int)
+			+> anon ("key" %: string)
+		)
+		start
+
+let () = Command.run ~version:"0.1" ~build_info:"github.com/SGrondin/analytics-harchiver" command
