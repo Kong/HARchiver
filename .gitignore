@@ -7,3 +7,8 @@
 *.cmx
 *.cmxs
 *.cmxa
+_build/
+node_modules/
+zmqtest/
+test.ml
+analytics-harchiver
