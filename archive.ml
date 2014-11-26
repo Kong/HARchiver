@@ -70,9 +70,17 @@ let get_entry req res req_length res_length timings = {
 	timings = get_har_timings timings;
 }
 
-let get_har req res req_length res_length timings = {
-	version = "1.2";
-	service_token = "";
-	creator = get_har_creator;
-	entries = [get_entry req res req_length res_length timings];
-}
+(* ================================================================================================ *)
+
+type t_get_har =  Request.t -> Response.t -> int -> int -> int * int * int -> har
+
+module type Sig_make = sig val get_har : t_get_har end
+
+module Make (X : sig val key : string end) : Sig_make = struct
+	let get_har req res req_length res_length timings = {
+		version = "1.2";
+		serviceToken = X.key;
+		creator = get_har_creator;
+		entries = [get_entry req res req_length res_length timings];
+	}
+end

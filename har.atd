@@ -1,6 +1,6 @@
 type har = {
 	version: string;
-	service_token <json name="serviceToken">: string;
+	serviceToken: string;
 	creator: creator;
 	entries: entry list;
 }

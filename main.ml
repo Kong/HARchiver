@@ -18,13 +18,14 @@ let get_timestamp () = Time.now () |> Time.to_float |> Int.of_float
 
 let stream_length stream = Lwt_stream.fold (fun a b -> (String.length a)+b) stream 0
 
-let make_server port () =
+let make_server port key () =
 	let sock = get_ZMQ_sock "tcp://127.0.0.1:4000" in
+	let module KeyArchive = Archive.Make (struct let key = key end) in
 	let send_har req res t_client_length t_provider_length timings =
 		t_client_length
 		>>= fun client_length -> t_provider_length
 		>>= fun provider_length ->
-			Lwt_zmq.Socket.send sock (Archive.get_har req res client_length provider_length timings |> string_of_har ~len:1024)
+			Lwt_zmq.Socket.send sock (KeyArchive.get_har req res client_length provider_length timings |> string_of_har ~len:1024)
 	in
 	let callback (_,_) req client_body =
 		let har_init = get_timestamp () in
@@ -58,12 +59,12 @@ let make_server port () =
 	let _ = Lwt_io.printf "Server listening on port %n\n" port in
 	Server.create ~ctx ~mode config
 
-let start port key () = Lwt_unix.run (make_server port ())
+let start port key () = Lwt_unix.run (make_server port key ())
 
 let command =
 	Command.basic
 		~summary:"Transparent analytics layer for apianalytics.com"
-		~readme:(fun () -> "Made to be portable, fast and transparent. It lets HTTP traffic through and streams datapoints to apianalytics.com.")
+		~readme:(fun () -> "Portable, fast and transparent proxy. It lets HTTP traffic through and streams datapoints to apianalytics.com.")
 		Command.Spec.(
 			empty
 			+> anon ("port" %: int)
