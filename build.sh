@@ -21,5 +21,9 @@ corebuild \
 cp main.native analytics-harchiver
 rm main.native
 patchelf --set-rpath '$ORIGIN/' analytics-harchiver
+cp analytics-harchiver release/
+cp LICENSE release/
+cp README.md release/
+tar czvf release.tar.gz release/
 
 ./clean.sh
