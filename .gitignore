@@ -13,4 +13,4 @@ zmqtest/
 test.ml
 analytics-harchiver
 release/
-release.tar.gz
+analytics-harchiver.tar.gz
