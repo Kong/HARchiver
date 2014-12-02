@@ -50,7 +50,7 @@ Go to http://zeromq.org/intro:get-the-software and download the latest 4.0.x rel
 
 `apt-get install libssl-dev` (or `yum`).
 
-Run `opam install core lwt ssl lwt-zmq cohttp atdgen utop`. If it fails, try reinstalling ZMQ and make sure that you followed all the instructions carefully and have all the dependencies listed on the ZMQ page, then try again.
+Run `opam install core lwt ssl cohttp lwt-zmq atdgen utop`. If it fails, try reinstalling ZMQ and make sure that you followed all the instructions carefully and have all the dependencies listed on the ZMQ page, then try again.
 
 ####5- Build it
 

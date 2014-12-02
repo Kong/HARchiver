@@ -1,4 +1,4 @@
-open Cohttp_async
+open Cohttp
 open Har_j
 
 type t_get_har = Request.t -> Response.t -> int -> int -> int * int * int -> har
