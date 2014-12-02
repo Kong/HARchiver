@@ -10,17 +10,20 @@ Still in development.
 ## Install
 
 ```
-wget analytics-harchiver.tar.gz
+wget http://simongrondin.name/files/analytics-harchiver.tar.gz
 tar xzvf analytics-harchiver.tar.gz
+cd release
 ```
 
 There's nothing else to do. Run `./analytics-harchiver -help` for instructions. Basically, the program needs a port number to listen to and your Service-Token. `./analytics-harchiver <PORT> <SERVICE-TOKEN>`.
 
 If the program doesn't start correctly and reports a GLIBC error, it's most likely because your Linux distribution is old and has been replaced by a new version. If it reports an STDC++ or CXX error, install `g++`. Feel free to open a Github Issue.
 
-### ZMQ
+### Libraries
 
-The executable of this project ships with a compiled executable of ZeroMQ, more specifically, the libzmq.so.4 file. As required by the LGPL license, you have been made aware that you are free to download and install your own from the [official website](http://zeromq.org/intro:get-the-software).
+This product includes software developed by the OpenSSL Project for use in the OpenSSL Toolkit (http://www.openssl.org/).
+
+This project ships with a compiled library of ZeroMQ, more specifically, the libzmq.so.4 file. As required by the LGPL license, you have been made aware that you are free to download and replace it with your own from the [official website](http://zeromq.org/intro:get-the-software).
 
 ## Compiling
 
