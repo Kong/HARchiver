@@ -76,7 +76,7 @@ let command =
 		Command.Spec.(
 			empty
 			+> anon ("port" %: int)
-			+> anon (maybe ("key" %: string))
+			+> anon (maybe ("service_token" %: string))
 		)
 		start
 

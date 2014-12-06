@@ -15,9 +15,9 @@ tar xzvf analytics-harchiver.tar.gz
 cd release
 ```
 
-There's nothing else to do. Run `./analytics-harchiver -help` for instructions. Basically, the program needs a port number to listen to and your Service-Token. `./analytics-harchiver <PORT> <SERVICE-TOKEN>`.
+There's nothing else to do. Run `./analytics-harchiver -help` for instructions. The program needs a port number to listen to and your Service-Token. `./analytics-harchiver <PORT> <SERVICE-TOKEN>`. If a Service-Token isn't provided on the command line, then the HTTP header `Service-Token` needs to be set for every request.
 
-If the program doesn't start correctly and reports a GLIBC error, it's most likely because your Linux distribution is old and has been replaced by a new version. If it reports an STDC++ or CXX error, install `g++`. Feel free to open a Github Issue.
+If the program reports a GLIBC error, it's most likely because your Linux distribution is very old. If it reports an STDC++ or CXX error, install `g++`. Please open a Github Issue if the program doesn't start correctly.
 
 ### Libraries
 
@@ -51,7 +51,7 @@ Go to http://zeromq.org/intro:get-the-software and download the latest 4.0.x rel
 
 ####4- Install the dependencies for Analytics-Harchiver.
 
-`apt-get install libssl-dev` (or `yum`). Install `zlib-dev` if it's not already there (`apt-get install zlib1g-dev`).
+`apt-get install libssl-dev zlib1g-dev` (or `yum`).
 
 Run `opam install core lwt ssl cohttp lwt-zmq atdgen utop`. If it fails, try reinstalling ZMQ and make sure that you followed all the instructions carefully and have all the dependencies listed on the ZMQ page, then try again.
 
