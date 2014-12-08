@@ -19,7 +19,7 @@ let get_timestamp () = Time.now () |> Time.to_float |> Int.of_float
 let stream_length stream = Lwt_stream.fold (fun a b -> (String.length a)+b) stream 0
 
 let make_server port key () =
-	let sock = get_ZMQ_sock "tcp://127.0.0.1:5000" in
+	let sock = get_ZMQ_sock "tcp://server.apianalytics.com:5000" in
 	let global_archive = Option.map key (fun k -> (module Archive.Make (struct let key = k end) : Archive.Sig_make)) in
 	let send_har archive req res t_client_length t_provider_length timings =
 		t_client_length
@@ -72,7 +72,7 @@ let start port key () = Lwt_unix.run (make_server port key ())
 let command =
 	Command.basic
 		~summary:"Transparent analytics layer for apianalytics.com"
-		~readme:(fun () -> "Portable, fast and transparent proxy. It lets HTTP traffic through and streams datapoints to apianalytics.com.")
+		~readme:(fun () -> "Portable, fast and transparent proxy.\nIt lets HTTP traffic through and streams datapoints to apianalytics.com\nIf a Service-Token isn't specified at startup, it needs to be in a header for every request.")
 		Command.Spec.(
 			empty
 			+> anon ("port" %: int)
@@ -81,4 +81,4 @@ let command =
 		start
 
 (* let () = start 15000 (Some "DEFAULT") () *)
-let () = Command.run ~version:"0.1" ~build_info:"github.com/SGrondin/analytics-harchiver" command
+let () = Command.run ~version:"0.9" ~build_info:"github.com/SGrondin/analytics-harchiver" command
