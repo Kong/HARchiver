@@ -6,6 +6,7 @@ open Cohttp_lwt_unix_io
 open Har_j
 
 module Body = Cohttp_lwt_body
+module CLU = Conduit_lwt_unix
 
 let get_ZMQ_sock remote =
 	let ctx = ZMQ.Context.create () in
@@ -18,6 +19,12 @@ let get_timestamp () = Time.now () |> Time.to_float |> Int.of_float
 
 let stream_length stream = Lwt_stream.fold (fun a b -> (String.length a)+b) stream 0
 
+let get_addr_from_ch = function
+| CLU.TCP {CLU.fd; ip; port} ->
+	match Lwt_unix.getpeername fd with
+	| Lwt_unix.ADDR_INET (ia,port) -> Ipaddr.to_string (Ipaddr_unix.of_inet_addr ia)
+	| Lwt_unix.ADDR_UNIX path -> sprintf "sock:%s" path
+
 let make_server port key () =
 	let sock = get_ZMQ_sock "tcp://server.apianalytics.com:5000" in
 	let global_archive = Option.map key (fun k -> (module Archive.Make (struct let key = k end) : Archive.Sig_make)) in
@@ -29,10 +36,10 @@ let make_server port key () =
 
 			Lwt_zmq.Socket.send sock (KeyArchive.get_har req res client_length provider_length timings |> string_of_har ~len:1024)
 	in
-	let callback (_,_) req client_body =
+	let callback (ch,_) req client_body =
 		let har_init = get_timestamp () in
 		let client_uri = Request.uri req in
-		let client_headers = Cohttp.Header.replace (Request.headers req) "Host" (Uri.host client_uri |> Option.value ~default:"") in
+		let client_headers = Request.headers req in
 		let t_client_length = Body.to_stream client_body |> Lwt_stream.clone |> stream_length in
 		let har_send = (get_timestamp ()) - har_init in
 		let local_archive = Option.map (Cohttp.Header.get client_headers "Service-Token") ~f:(fun k ->
@@ -42,7 +49,10 @@ let make_server port key () =
 			match Option.first_some local_archive global_archive with
 			| None -> raise (Failure "Service-Token missing")
 			| Some archive ->
-				Client.call ~headers:client_headers ~body:client_body (Request.meth req) client_uri
+				let client_headers_ready = Cohttp.Header.remove client_headers "Service-Token"
+					|> fun h -> Cohttp.Header.remove h "Host" (* Automatically added by Cohttp *)
+					|> fun h -> Cohttp.Header.add h "X-Forwarded-For" (get_addr_from_ch ch) in
+				Client.call ~headers:client_headers_ready ~body:client_body (Request.meth req) client_uri
 				>>= fun (res, provider_body) ->
 					let har_wait = (get_timestamp ()) - har_init in
 					let provider_headers = Cohttp.Header.remove (Response.headers res) "content-length" in (* Because we're using Transfer-Encoding: Chunked *)
@@ -72,7 +82,9 @@ let start port key () = Lwt_unix.run (make_server port key ())
 let command =
 	Command.basic
 		~summary:"Transparent analytics layer for apianalytics.com"
-		~readme:(fun () -> "Portable, fast and transparent proxy.\nIt lets HTTP traffic through and streams datapoints to apianalytics.com\nIf a Service-Token isn't specified at startup, it needs to be in a header for every request.")
+		~readme:(fun () -> "Portable, fast and transparent proxy.\n
+			It lets HTTP traffic through and streams datapoints to apianalytics.com\n
+			If a Service-Token isn't specified at startup, it needs to be in a header for every request.")
 		Command.Spec.(
 			empty
 			+> anon ("port" %: int)
