@@ -14,3 +14,4 @@ test.ml
 analytics-harchiver
 release/
 analytics-harchiver.tar.gz
+*.pem

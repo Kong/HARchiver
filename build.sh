@@ -8,7 +8,7 @@ atdgen -j -j-std har.atd
 rm -r _build
 
 corebuild \
-	-lflag -nodynlink \
+	-tag debug \
 	-pkg lwt \
 	-pkg lwt.syntax \
 	-pkg cohttp.lwt \
