@@ -8,14 +8,20 @@ Made to be portable, fast and transparent. It lets HTTP/HTTPS traffic through an
 ## Install
 
 ```
-wget http://simongrondin.name/files/harchiver.tar.gz
+wget https://github.com/SGrondin/harchiver/releases/download/v1.0.1/harchiver.tar.gz
 tar xzvf harchiver.tar.gz
 cd release
 ```
 
-There's nothing else to do. Run `./harchiver -help` for instructions. The program needs a port number to listen to and your Service-Token. `./harchiver <PORT> <SERVICE-TOKEN>`. If a Service-Token isn't provided on the command line, then the HTTP header `Service-Token` needs to be set for every request.
+There's nothing else to do.
 
-Other command line options include `-https <PORT>` to add HTTPS support. In that case, the files `key.cert` and `cert.pem` need to be in the same directory as the harchiver. There's also `-debug` to output the generated data on-the-fly.
+Run `./harchiver -help` for instructions.
+
+The program needs a port number to listen to and your Service-Token. `./harchiver <PORT> <SERVICE-TOKEN>`. If a Service-Token isn't provided on the command line, then the HTTP header `Service-Token` needs to be set for every request.
+
+Other command line options include `-https <PORT>` to add HTTPS support. In that case, the files `key.cert` and `cert.pem` need to be in the same directory as the harchiver.
+
+There's also `-debug` to output the generated data on-the-fly.
 
 If the program reports a GLIBC error, it's most likely because your Linux distribution is very old. Please open a Github Issue if the program doesn't start correctly.
 
