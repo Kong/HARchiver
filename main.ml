@@ -45,7 +45,7 @@ let make_server port https debug key =
 			let module KeyArchive = (val archive : Archive.Sig_make) in
 
 			let har_string = KeyArchive.get_har req res client_length provider_length timings |> string_of_har ~len:1024 in
-			if debug then Lwt_io.printl har_string else
+			let _ = if debug then Lwt_io.printl har_string else return () in
 			Lwt_zmq.Socket.send sock har_string
 	in
 	let callback (ch,_) req client_body =
@@ -139,4 +139,4 @@ let command =
 		)
 		start
 
-let () = Command.run ~version:"1.0" ~build_info:"github.com/SGrondin/harchiver" command
+let () = Command.run ~version:"1.0.1" ~build_info:"github.com/SGrondin/harchiver" command

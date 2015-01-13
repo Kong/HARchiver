@@ -31,7 +31,7 @@ It's recommended to simply use the provided binaries, but here are the instructi
 
 ####1- Acquire OPAM
 
-Check if your Linux distribution offers OPAM 1.2 Ein `yum` or `apt-get`. If it does, install it and go to step 2. Otherwise, check if your distribution offers OCaml 4. If it does, install it and go to Step 1.2, if it doesn't, go to Step 1.1.
+Check if your Linux distribution offers OPAM 1.2 in `yum` or `apt-get`. If it does, install it and go to step 2. Otherwise, check if your distribution offers OCaml 4. If it does, install it and go to Step 1.2, if it doesn't, go to Step 1.1.
 
 ####1.1- Install OCaml 4.02.0 from source
 
