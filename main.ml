@@ -33,17 +33,20 @@ let rec fork = function
 	| 0 -> fork (n - 1)
 	| pid -> pid
 
-let make_server port concurrency key =
+let make_server port https debug key =
+	let concurrency = 200 in
 	let nb_current = ref 0 in
 	let sock = get_ZMQ_sock "tcp://server.apianalytics.com:5000" in
-	let global_archive = Option.map key (fun k -> (module Archive.Make (struct let key = k end) : Archive.Sig_make)) in
+	let global_archive = Option.map ~f:(fun k -> (module Archive.Make (struct let key = k end) : Archive.Sig_make)) key in
 	let send_har archive req res t_client_length t_provider_length timings =
 		t_client_length
 		>>= fun client_length -> t_provider_length
 		>>= fun provider_length ->
 			let module KeyArchive = (val archive : Archive.Sig_make) in
 
-			Lwt_zmq.Socket.send sock (KeyArchive.get_har req res client_length provider_length timings |> string_of_har ~len:1024)
+			let har_string = KeyArchive.get_har req res client_length provider_length timings |> string_of_har ~len:1024 in
+			if debug then Lwt_io.printl har_string else
+			Lwt_zmq.Socket.send sock har_string
 	in
 	let callback (ch,_) req client_body =
 		let () = nb_current := (!nb_current + 1) in
@@ -62,9 +65,8 @@ let make_server port concurrency key =
 			| None -> raise (Failure "Service-Token missing")
 			| Some archive ->
 				let client_headers_ready = Cohttp.Header.remove client_headers "Service-Token"
-					|> fun h -> Cohttp.Header.remove h "Host" (* Automatically added by Cohttp *)
-					|> fun h -> Cohttp.Header.add h "X-Forwarded-For" "0.0.0.0" in
-					(* |> fun h -> Cohttp.Header.add h "X-Forwarded-For" (get_addr_from_ch ch) in *)
+				|> fun h -> Cohttp.Header.remove h "Host" (* Duplicate automatically added by Cohttp *)
+				|> fun h -> Cohttp.Header.add h "X-Forwarded-For" (get_addr_from_ch ch) in
 				let remote_call = Client.call ~headers:client_headers_ready ~body:client_body (Request.meth req) client_uri
 				>>= fun (res, provider_body) ->
 					let har_wait = (get_timestamp ()) - har_init in
@@ -84,7 +86,6 @@ let make_server port concurrency key =
 			| _ ->
 				(500, ("500: "^(Exn.to_string ex)))
 			in
-			let _ = Lwt_io.printl error_text in
 			let har_wait = (get_timestamp ()) - har_init in
 			let t_res = Server.respond_error ~status:(Cohttp.Code.status_of_code error_code) ~body:error_text () in
 			let _ = t_res >>= fun (res, body) ->
@@ -97,35 +98,45 @@ let make_server port concurrency key =
 		let _ = response >>= fun _ -> return (nb_current := (!nb_current - 1)) in
 		response
 	in
-	let conn_closed (_,_) () = () in
-	let config = {Server.callback; conn_closed} in
+	let conn_closed (_,_) = () in
+	let config = Server.make ~callback ~conn_closed () in
 	let ctx = Cohttp_lwt_unix_net.init () in
 	let tcp_mode = `TCP (`Port port) in
-	let ssl_mode = `OpenSSL (`Crt_file_path "cert.pem", `Key_file_path "key.pem", `No_password, `Port (port+1)) in
 	let tcp_server = Server.create ~ctx ~mode:tcp_mode config in
-	let ssl_server = Server.create ~ctx ~mode:ssl_mode config in
-	let _ = Lwt_io.printf "HTTP  server listening on port %n\nHTTPS server listening on port %n\n" port (port+1) in
-
+	let _ = Lwt_io.printf "HTTP server listening on port %n\n" port in
+	let t_servers = match https with
+	| None ->
+		tcp_server
+	| Some https_port ->
+		let ssl_mode = `OpenSSL (`Crt_file_path "cert.pem", `Key_file_path "key.pem", `No_password, `Port (https_port)) in
+		let start_https_thunk () = Server.create ~ctx ~mode:ssl_mode config in
+		match Result.try_with start_https_thunk with
+		| Ok ssl_server ->
+			let _ = Lwt_io.printf "HTTPS server listening on port %n\n" https_port in
+			(tcp_server <&> ssl_server)
+		| Error e ->
+			let _ = Lwt_io.printf "An HTTPS error occured. Make sure both cert.pem and key.pem are located in the current harchiver directory\n%s\nOnly HTTP mode was started\n\n" (Exn.to_string e) in
+			tcp_server
+	in
 	match fork 3 with
-	| 0 -> Lwt_unix.sleep 40. >>= fun () -> exit 0
-	| _ -> tcp_server <&> ssl_server
+	| 0 -> t_servers
+	| pid -> t_servers
 
-let start port concurrency key () = Lwt_unix.run (make_server port concurrency key)
+let start port https debug key () = Lwt_unix.run (make_server port https debug key)
 
 let command =
 	Command.basic
-		~summary:"Transparent analytics layer for apianalytics.com"
+		~summary:"Lightweight analytics layer for apianalytics.com"
 		~readme:(fun () -> "Portable, fast and transparent proxy.\n
-			It lets HTTP traffic through and streams datapoints to apianalytics.com\n
+			It lets HTTP/HTTPS traffic through and streams datapoints to apianalytics.com\n
 			If a Service-Token isn't specified at startup, it needs to be in a header for every request.")
 		Command.Spec.(
 			empty
 			+> anon ("port" %: int)
-			+> anon ("concurrency" %: int)
+			+> flag "https" (optional int) ~doc:" Pass the desired HTTPS port. This also means that the files cert.pem and key.pem must be present in the current directory."
+			+> flag "debug" no_arg ~doc:" Print generated HARs on-the-fly"
 			+> anon (maybe ("service_token" %: string))
 		)
 		start
 
-(* let () = start 15000 (Some "DEFAULT") () *)
-
-let () = Command.run ~version:"0.9" ~build_info:"github.com/SGrondin/analytics-harchiver" command
+let () = Command.run ~version:"1.0" ~build_info:"github.com/SGrondin/harchiver" command

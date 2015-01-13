@@ -20,8 +20,8 @@ let get_unique_header raw_headers desired =
 (* ================================================================================================ *)
 
 let get_har_creator = {
-	name = "Mashape OCaml proxy";
-	version = "0.1";
+	name = "Harchiver";
+	version = "1.0";
 }
 
 let get_har_request req req_length = {

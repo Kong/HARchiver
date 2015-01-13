@@ -1,23 +1,23 @@
-analytics-harchiver
+harchiver
 ===================
 
-Transparent analytics layer for apianalytics.com
+Lightweight analytics layer for apianalytics.com
 
-Made to be portable, fast and transparent. It lets HTTP traffic through and streams datapoints to apianalytics.com.
-
-Still in development.
+Made to be portable, fast and transparent. It lets HTTP/HTTPS traffic through and streams datapoints to apianalytics.com.
 
 ## Install
 
 ```
-wget http://simongrondin.name/files/analytics-harchiver.tar.gz
-tar xzvf analytics-harchiver.tar.gz
+wget http://simongrondin.name/files/harchiver.tar.gz
+tar xzvf harchiver.tar.gz
 cd release
 ```
 
-There's nothing else to do. Run `./analytics-harchiver -help` for instructions. The program needs a port number to listen to and your Service-Token. `./analytics-harchiver <PORT> <SERVICE-TOKEN>`. If a Service-Token isn't provided on the command line, then the HTTP header `Service-Token` needs to be set for every request.
+There's nothing else to do. Run `./harchiver -help` for instructions. The program needs a port number to listen to and your Service-Token. `./harchiver <PORT> <SERVICE-TOKEN>`. If a Service-Token isn't provided on the command line, then the HTTP header `Service-Token` needs to be set for every request.
 
-If the program reports a GLIBC error, it's most likely because your Linux distribution is very old. If it reports an STDC++ or CXX error, install `g++`. Please open a Github Issue if the program doesn't start correctly.
+Other command line options include `-https <PORT>` to add HTTPS support. In that case, the files `key.cert` and `cert.pem` need to be in the same directory as the harchiver. There's also `-debug` to output the generated data on-the-fly.
+
+If the program reports a GLIBC error, it's most likely because your Linux distribution is very old. Please open a Github Issue if the program doesn't start correctly.
 
 ### Libraries
 
@@ -31,7 +31,7 @@ It's recommended to simply use the provided binaries, but here are the instructi
 
 ####1- Acquire OPAM
 
-Check if your Linux distribution offers OPAM 1.2 in `yum` or `apt-get`. If it does, install it and go to step 2. Otherwise, check if your distribution offers OCaml 4. If it does, install it and go to Step 1.2, if it doesn't, go to Step 1.1.
+Check if your Linux distribution offers OPAM 1.2 Ein `yum` or `apt-get`. If it does, install it and go to step 2. Otherwise, check if your distribution offers OCaml 4. If it does, install it and go to Step 1.2, if it doesn't, go to Step 1.1.
 
 ####1.1- Install OCaml 4.02.0 from source
 
@@ -49,7 +49,7 @@ This is necessary for some of the dependencies. Run `opam init`, then `opam swit
 
 Go to http://zeromq.org/intro:get-the-software and download the latest 4.0.x release POSIX tarball. Then scroll and follow the instructions in the `To build on UNIX-like systems` section.
 
-####4- Install the dependencies for Analytics-Harchiver.
+####4- Install the dependencies for Harchiver.
 
 `apt-get install libssl-dev zlib1g-dev` (or `yum`).
 
@@ -57,7 +57,5 @@ Run `opam install core lwt ssl cohttp lwt-zmq atdgen utop`. If it fails, try rei
 
 ####5- Build it
 
-You are now ready to compile the program. Run `./build.sh` in the Analytics-Harchiver directory. If everything went fine until this point you'll see an `analytics-harchiver` file in the directory. Congrats!
-
-
+You are now ready to compile the program. Run `./build.sh` in the Harchiver directory. If everything went fine until this point you'll see a `harchiver` file in the directory. Congrats!
 

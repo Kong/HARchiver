@@ -18,7 +18,7 @@ corebuild \
 	-pkg ZMQ \
 	main.native
 
-cp main.native analytics-harchiver
+cp main.native harchiver
 rm main.native
 
 ./clean.sh
