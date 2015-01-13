@@ -11,7 +11,7 @@ _build/
 node_modules/
 zmqtest/
 test.ml
-analytics-harchiver
+harchiver
 release/
-analytics-harchiver.tar.gz
+harchiver.tar.gz
 *.pem
