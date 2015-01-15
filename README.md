@@ -1,7 +1,7 @@
 harchiver
 ===================
 
-Lightweight analytics layer for apianalytics.com
+Universal Lightweight analytics layer for apianalytics.com
 
 Made to be portable, fast and transparent. It lets HTTP/HTTPS traffic through and streams datapoints to apianalytics.com.
 
