@@ -24,7 +24,7 @@ let get_unique_header raw_headers desired =
 
 let get_har_creator = {
 	name = "Mashape HARchiver";
-	version = "1.0.1";
+	version = "1.1.0";
 }
 
 let get_har_request req req_length = {

@@ -137,4 +137,4 @@ let command =
 		)
 		start
 
-let () = Command.run ~version:"1.0.1" ~build_info:"github.com/Mashape/HARchiver" command
+let () = Command.run ~version:"1.1.0" ~build_info:"github.com/Mashape/HARchiver" command

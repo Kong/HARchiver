@@ -34,7 +34,7 @@ First, read the Linux instructions to learn the command line options.
 ##### HTTP only
 
 The only thing needed is to create a container with the correct port forwarding and command-line options from the image.
-```
+```bash
 sudo docker run -p 15000:15000 --name="harchiver_http" mashape/harchiver
 # or with some options:
 sudo docker run -p 15000:15000 --name="harchiver_http" mashape/harchiver /release/harchiver 15000 OPTIONAL_SERVICE_TOKEN
@@ -45,7 +45,7 @@ There's now a container named `harchiver_http` that can be started easily with `
 ##### With HTTPS
 
 The certificate and key must be copied into a new image based on the `mashape/harchiver` image.
-```
+```bash
 # First make a basic container
 sudo docker run -p 15000:15000 --name="harchiver_http" mashape/harchiver
 
