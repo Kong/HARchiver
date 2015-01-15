@@ -15,15 +15,19 @@ tar xzvf harchiver.tar.gz
 cd release
 ```
 
-There's nothing else to do.
+There's nothing else to do. Run it with `./harchiver`.
 
-Run `./harchiver -help` for instructions.
+##### Options
 
-The program needs a port number to listen to and your Service-Token. `./harchiver <PORT> <SERVICE-TOKEN>`. If a Service-Token isn't provided on the command line, then the HTTP header `Service-Token` needs to be set for every request.
+`harchiver PORT OPTIONAL_SERVICE_TOKEN`
 
-Other command line options include `-https <PORT>` to add HTTPS support. In that case, the files `key.cert` and `cert.pem` need to be in the same directory as the harchiver.
+If a Service-Token isn't provided, then the HTTP header `Service-Token` needs to be set for every request.
 
-There's also `-debug` to output the generated data on-the-fly.
+`-help` for instructions.
+
+`-https <PORT>` to add HTTPS support. In that case, the files `key.cert` and `cert.pem` need to be in the same directory as the harchiver.
+
+`-debug` to output the generated data on-the-fly.
 
 If the program reports a GLIBC error, it's most likely because your Linux distribution is very old. Please open a Github Issue if the program doesn't start correctly.
 
@@ -57,8 +61,8 @@ sudo docker pull mashape/harchiver
 sudo docker run -p 15000:15000 --name="harchiver_http" mashape/harchiver
 
 # Let it run and switch to a new terminal window
-# Copy the certificate and the key into the container
 # Remember that the certificate and key MUST be named cert.pem and key.pem
+# Copy the certificate and the key into the container
 sudo docker exec -i harchiver_http bash -c 'cat > /key.pem' < key.pem
 sudo docker exec -i harchiver_http bash -c 'cat > /cert.pem' < cert.pem
 
