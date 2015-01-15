@@ -7,3 +7,5 @@ module type Sig_make = sig val get_har : t_get_har end
 module type Sig_arg = sig val key : bytes end
 
 module Make : functor (X : Sig_arg) -> Sig_make
+
+val get_timestamp_ms : unit -> int

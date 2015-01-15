@@ -3,6 +3,9 @@ open Cohttp_lwt
 open Cohttp_lwt_unix
 open Har_j
 
+let get_timestamp () = Time.now () |> Time.to_float |> Int.of_float
+let get_timestamp_ms () = Time.now () |> Time.to_float |> ( *. ) 1000. |> Int.of_float
+
 let name_value_of_query tl =
 	List.map ~f:(fun (name, values) ->
 		let value = String.concat values in
@@ -20,7 +23,7 @@ let get_unique_header raw_headers desired =
 (* ================================================================================================ *)
 
 let get_har_creator = {
-	name = "Harchiver";
+	name = "Mashape HARchiver";
 	version = "1.0.1";
 }
 
@@ -63,7 +66,7 @@ let get_har_timings (send, wait, receive) = {
 }
 
 let get_entry req res req_length res_length timings = {
-	startedDateTime = 0;
+	startedDateTime = get_timestamp ();
 	request = get_har_request req req_length;
 	response = get_har_reponse res res_length;
 	cache = get_har_cache;

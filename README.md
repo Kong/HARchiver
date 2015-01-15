@@ -7,8 +7,10 @@ Made to be portable, fast and transparent. It lets HTTP/HTTPS traffic through an
 
 ## Install
 
+#### Linux
+
 ```
-wget https://github.com/SGrondin/harchiver/releases/download/v1.0.1/harchiver.tar.gz
+wget https://github.com/Mashape/harchiver/releases/download/v1.0.1/harchiver.tar.gz
 tar xzvf harchiver.tar.gz
 cd release
 ```
@@ -25,7 +27,47 @@ There's also `-debug` to output the generated data on-the-fly.
 
 If the program reports a GLIBC error, it's most likely because your Linux distribution is very old. Please open a Github Issue if the program doesn't start correctly.
 
-### Libraries
+#### Docker
+
+First, read the Linux instructions to learn the command line options.
+
+##### HTTP only
+
+The only thing needed is to create a container with the correct port forwarding and command-line options from the image.
+```
+sudo docker run -p 15000:15000 --name="harchiver_http" mashape/harchiver
+# or with some options:
+sudo docker run -p 15000:15000 --name="harchiver_http" mashape/harchiver /release/harchiver 15000 OPTIONAL_SERVICE_TOKEN
+```
+
+There's now a container named `harchiver_http` that can be started easily with `sudo docker start harchiver_http`. That container can be removed and recreated from the `mashape/harchiver` image easily to change the command-line options.
+
+##### With HTTPS
+
+The certificate and key must be copied into a new image based on the `mashape/harchiver` image.
+```
+# First make a basic container
+sudo docker run -p 15000:15000 --name="harchiver_http" mashape/harchiver
+
+# Let it run and switch to a new terminal window
+# Copy the certificate and the key into the container
+# Remember that the certificate and key MUST be named cert.pem and key.pem
+sudo docker exec -i harchiver_http bash -c 'cat > /key.pem' < key.pem
+sudo docker exec -i harchiver_http bash -c 'cat > /cert.pem' < cert.pem
+
+# Stop the container
+sudo docker kill harchiver_http
+
+# Save it as a new image
+sudo docker commit -m "Added https support" harchiver_http harchiver_image_https
+
+# Create a container from it
+sudo docker run -p 15000:15000 -p 15001:15001 --name="harchiver_https" harchiver_image_https /release/harchiver 15000 -https 15001 OPTIONAL_SERVICE_TOKEN
+```
+
+There's now a container named `harchiver_https`!
+
+## Libraries
 
 This product includes software developed by the OpenSSL Project for use in the OpenSSL Toolkit (http://www.openssl.org/).
 
@@ -33,7 +75,7 @@ This project ships with a compiled library of ZeroMQ, more specifically, the lib
 
 ## Compiling
 
-It's recommended to simply use the provided binaries, but here are the instructions to compile it from scratch. It's not for the faint of heart.
+This is seriously not recommended, but here are the instructions to compile it from scratch. It's not for the faint of heart.
 
 ####1- Acquire OPAM
 

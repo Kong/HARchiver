@@ -1,7 +1,7 @@
 #!/bin/sh
 
 # generate key
-openssl genrsa -des3 -out server.key 1024
+openssl genrsa -out server.key 1024
 
 # strip password
 mv server.key server.key.pass
