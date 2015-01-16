@@ -25,14 +25,8 @@ let get_addr_from_ch = function
 	| Lwt_unix.ADDR_UNIX path -> sprintf "sock:%s" path end
 | _ -> ""
 
-let rec fork = function
-| 0 -> 0
-| n -> match Lwt_unix.fork () with
-	| 0 -> fork (n - 1)
-	| pid -> pid
-
-let make_server port https debug key =
-	let concurrency = 400 in
+let make_server port https debug concurrent key =
+	let concurrency = Option.value ~default:Int.max_value concurrent in
 	let nb_current = ref 0 in
 	let sock = get_ZMQ_sock "tcp://socket.apianalytics.com:5000" in
 	let global_archive = Option.map ~f:(fun k -> (module Archive.Make (struct let key = k end) : Archive.Sig_make)) key in
@@ -48,7 +42,6 @@ let make_server port https debug key =
 	in
 	let callback (ch,_) req client_body =
 		let () = nb_current := (!nb_current + 1) in
-
 		let t0 = Archive.get_timestamp_ms () in
 		let client_uri = Request.uri req in
 		let client_headers = Request.headers req in
@@ -102,7 +95,7 @@ let make_server port https debug key =
 	let tcp_mode = `TCP (`Port port) in
 	let tcp_server = Server.create ~ctx ~mode:tcp_mode config in
 	let _ = Lwt_io.printf "HTTP server listening on port %n\n" port in
-	let t_servers = match https with
+	match https with
 	| None ->
 		tcp_server
 	| Some https_port ->
@@ -115,12 +108,8 @@ let make_server port https debug key =
 		| Error e ->
 			let _ = Lwt_io.printf "An HTTPS error occured. Make sure both cert.pem and key.pem are located in the current harchiver directory\n%s\nOnly HTTP mode was started\n\n" (Exn.to_string e) in
 			tcp_server
-	in
-	match fork 3 with
-	| 0 -> t_servers
-	| pid -> t_servers
 
-let start port https debug key () = Lwt_unix.run (make_server port https debug key)
+let start port https debug concurrent key () = Lwt_unix.run (make_server port https debug concurrent key)
 
 let command =
 	Command.basic
@@ -133,8 +122,9 @@ let command =
 			+> anon ("port" %: int)
 			+> flag "https" (optional int) ~doc:" Pass the desired HTTPS port. This also means that the files 'cert.pem' and 'key.pem' must be present in the current directory."
 			+> flag "debug" no_arg ~doc:" Print generated HARs on-the-fly"
+			+> flag "c" (optional int) ~doc:" Set a maximum number of concurrent requests"
 			+> anon (maybe ("service_token" %: string))
 		)
 		start
 
-let () = Command.run ~version:"1.1.0" ~build_info:"github.com/Mashape/HARchiver" command
+let () = Command.run ~version:"1.2.0" ~build_info:"github.com/Mashape/HARchiver" command

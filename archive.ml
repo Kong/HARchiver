@@ -24,7 +24,7 @@ let get_unique_header raw_headers desired =
 
 let get_har_creator = {
 	name = "Mashape HARchiver";
-	version = "1.1.0";
+	version = "1.2.0";
 }
 
 let get_har_request req req_length = {
@@ -66,7 +66,7 @@ let get_har_timings (send, wait, receive) = {
 }
 
 let get_entry req res req_length res_length timings = {
-	startedDateTime = get_timestamp ();
+	startedDateTime = get_timestamp_ms ();
 	request = get_har_request req req_length;
 	response = get_har_reponse res res_length;
 	cache = get_har_cache;

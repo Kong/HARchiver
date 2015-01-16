@@ -10,7 +10,7 @@ Made to be portable, fast and transparent. It lets HTTP/HTTPS traffic through an
 #### Linux
 
 ```
-wget https://github.com/Mashape/harchiver/releases/download/v1.0.1/harchiver.tar.gz
+wget https://github.com/Mashape/harchiver/releases/download/v1.2.0/harchiver.tar.gz
 tar xzvf harchiver.tar.gz
 cd release
 ```
@@ -25,11 +25,15 @@ If a Service-Token isn't provided, then the HTTP header `Service-Token` needs to
 
 `-help` for instructions.
 
-`-https <PORT>` to add HTTPS support. In that case, the files `key.cert` and `cert.pem` need to be in the same directory as the harchiver.
+`-https PORT` to add HTTPS support. In that case, the files `key.cert` and `cert.pem` need to be in the same directory as the harchiver.
+
+`-c NB` to set a maximum number of concurrent requests.
 
 `-debug` to output the generated data on-the-fly.
 
-If the program reports a GLIBC error, it's most likely because your Linux distribution is very old. Please open a Github Issue if the program doesn't start correctly.
+`-version` for the version number.
+
+If the program reports a GLIBC error on startup, it's most likely because your Linux distribution is very old. Please open a Github Issue if the program doesn't start correctly.
 
 #### Docker
 
