@@ -8,9 +8,10 @@
 *.cmxs
 *.cmxa
 _build/
+src/_build/
 node_modules/
-zmqtest/
 test.ml
+har_*.ml*
 harchiver
 release/
 harchiver.tar.gz

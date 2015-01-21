@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
 
-./clean.sh
+./scripts/clean.sh
+
+pushd src &> /dev/null
 
 atdgen -t -j-std har.atd
 atdgen -j -j-std har.atd
-
-rm -r _build
 
 corebuild \
 	-tag debug \
@@ -19,7 +19,9 @@ corebuild \
 	-pkg ZMQ \
 	main.native
 
-cp main.native harchiver
+cp main.native ../harchiver
 rm main.native
 
-./clean.sh
+popd &> /dev/null
+
+./scripts/clean.sh
