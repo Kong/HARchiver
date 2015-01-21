@@ -3,13 +3,29 @@ open Cohttp_lwt
 open Cohttp_lwt_unix
 open Har_j
 
-let get_timestamp () = Time.now () |> Time.to_float |> Int.of_float
+type t_input = {
+	req: Request.t;
+	res: Response.t;
+	req_length: int;
+	res_length: int;
+	client_ip: string;
+	server_ip: string;
+	timings: int * int * int;
+	startedDateTime: string;
+}
+
+type t_get_message =  t_input -> message
+
+(* ================================================================================================ *)
+
 let get_timestamp_ms () = Time.now () |> Time.to_float |> ( *. ) 1000. |> Int.of_float
+let get_utc_time_string () = Time.now () |> Time.to_string_abs ~zone:Core.Zone.utc
 
 let name_value_of_query tl =
 	List.map ~f:(fun (name, values) ->
 		let value = String.concat values in
-		{name; value}) tl
+		{name; value}
+	) tl
 
 let name_value_of_headers tl =
 	List.map ~f:(fun (name, value) -> {name; value}) tl
@@ -27,20 +43,23 @@ let get_har_creator = {
 	version = "1.2.0";
 }
 
-let get_har_request req req_length = {
-	meth = Cohttp.Code.string_of_method (Request.meth req);
-	url = Uri.to_string (Request.uri req);
-	httpVersion = Cohttp.Code.string_of_version (Request.version req);
-	queryString = req |> Request.uri |> Uri.query |> name_value_of_query;
-	headers = req |> Request.headers |> Cohttp.Header.to_list |> name_value_of_headers;
-	headersSize = req |> Request.headers |> length_of_headers;
-	bodySize = req_length;
+let get_har_content raw_headers size = {
+	size;
+	mimeType = get_unique_header raw_headers "content-type";
 }
 
-let get_har_response_content raw_headers res_length = {
-	size = res_length; (* What's this? *)
-	mimeType = get_unique_header raw_headers "content-type" |> Option.value ~default:"";
-}
+let get_har_request req req_length =
+	let raw_headers = req |> Request.headers |> Cohttp.Header.to_list in
+	{
+		meth = Cohttp.Code.string_of_method (Request.meth req);
+		url = Uri.to_string (Request.uri req);
+		httpVersion = Cohttp.Code.string_of_version (Request.version req);
+		queryString = req |> Request.uri |> Uri.query |> name_value_of_query;
+		headers = raw_headers |> name_value_of_headers;
+		headersSize = req |> Request.headers |> length_of_headers;
+		bodySize = req_length;
+		content = get_har_content raw_headers req_length;
+	}
 
 let get_har_reponse res res_length =
 	let raw_headers = res |> Response.headers |> Cohttp.Header.to_list in
@@ -49,15 +68,10 @@ let get_har_reponse res res_length =
 		statusText = res |> Response.status |> Cohttp.Code.string_of_status;
 		httpVersion = res |> Response.version |> Cohttp.Code.string_of_version;
 		headers = raw_headers |> name_value_of_headers;
-		content = get_har_response_content raw_headers res_length;
-		redirectUrl = get_unique_header raw_headers "location" |> Option.value ~default:"";
 		headersSize = res |> Response.headers |> length_of_headers;
 		bodySize = res_length;
+		content = get_har_content raw_headers res_length;
 	}
-
-let get_har_cache = {
-	x = None;
-}
 
 let get_har_timings (send, wait, receive) = {
 	send;
@@ -65,26 +79,30 @@ let get_har_timings (send, wait, receive) = {
 	receive;
 }
 
-let get_entry req res req_length res_length timings = {
-	startedDateTime = get_timestamp_ms ();
+let get_har_entry {req; res; req_length; res_length; client_ip; server_ip; timings=(t1, t2, t3); startedDateTime;} = {
+	serverIPAddress = server_ip;
+	clientIPAddress = client_ip;
+	startedDateTime;
+	time = (t1 + t2 + t3);
 	request = get_har_request req req_length;
 	response = get_har_reponse res res_length;
-	cache = get_har_cache;
-	timings = get_har_timings timings;
+	timings = get_har_timings (t1, t2, t3);
+}
+
+let get_har input = {
+	version = "1.2";
+	creator = get_har_creator;
+	entries = [get_har_entry input];
 }
 
 (* ================================================================================================ *)
 
-type t_get_har =  Request.t -> Response.t -> int -> int -> int * int * int -> har
-
-module type Sig_make = sig val get_har : t_get_har end
+module type Sig_make = sig val get_message : t_get_message end
 module type Sig_arg = sig val key : bytes end
 
 module Make (X : Sig_arg) : Sig_make = struct
-	let get_har req res req_length res_length timings = {
-		version = "1.2";
+	let get_message input = {
 		serviceToken = X.key;
-		creator = get_har_creator;
-		entries = [get_entry req res req_length res_length timings];
+		har = get_har input;
 	}
 end

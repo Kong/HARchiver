@@ -18,6 +18,21 @@ let get_ZMQ_sock remote =
 
 let stream_length stream = Lwt_stream.fold (fun a b -> (String.length a)+b) stream 0
 
+let resolver_t = Dns_resolver_unix.create ()
+
+let dns_lookup host =
+	let open Dns.Packet in
+	resolver_t
+	>>= fun resolver ->
+		Dns_resolver_unix.resolve resolver Q_IN Q_A (Dns.Name.string_to_domain_name host)
+	>>= fun response ->
+		match List.hd response.answers with
+		| None -> return (Error "No answer")
+		| Some answer ->
+			match answer.rdata with
+			| A ipv4 -> return (Ok (Ipaddr.V4.to_string ipv4))
+			| _ -> return (Error "Not ipv4")
+
 let get_addr_from_ch = function
 | CLU.TCP {CLU.fd; ip; port} -> begin
 	match Lwt_unix.getpeername fd with
@@ -30,19 +45,36 @@ let make_server port https debug concurrent key =
 	let nb_current = ref 0 in
 	let sock = get_ZMQ_sock "tcp://socket.apianalytics.com:5000" in
 	let global_archive = Option.map ~f:(fun k -> (module Archive.Make (struct let key = k end) : Archive.Sig_make)) key in
-	let send_har archive req res t_client_length t_provider_length timings =
+	let send_har archive req res t_client_length t_provider_length client_ip timings startedDateTime =
 		t_client_length
-		>>= fun client_length -> t_provider_length
+		>>= fun client_length ->
+			t_provider_length
 		>>= fun provider_length ->
+			dns_lookup (req |> Request.uri |> Uri.host |> Option.value ~default:"")
+		>>= fun server_ip ->
 			let module KeyArchive = (val archive : Archive.Sig_make) in
 
-			let har_string = KeyArchive.get_har req res client_length provider_length timings |> string_of_har ~len:1024 in
+			let open Archive in
+			let archive_input = {
+				req;
+				res;
+				req_length = client_length;
+				res_length = provider_length;
+				client_ip;
+				server_ip = (server_ip |> Result.ok |> Option.value ~default:"");
+				timings;
+				startedDateTime;
+			} in
+
+			let har_string = KeyArchive.get_message archive_input |> string_of_message ~len:1024 in
 			let _ = if debug then Lwt_io.printl har_string else return () in
 			Lwt_zmq.Socket.send sock har_string
 	in
 	let callback (ch,_) req client_body =
 		let () = nb_current := (!nb_current + 1) in
 		let t0 = Archive.get_timestamp_ms () in
+		let startedDateTime = Archive.get_utc_time_string () in
+		let client_ip = get_addr_from_ch ch in
 		let client_uri = Request.uri req in
 		let client_headers = Request.headers req in
 		let t_client_length = Body.to_stream client_body |> Lwt_stream.clone |> stream_length in
@@ -57,14 +89,14 @@ let make_server port https debug concurrent key =
 			| Some archive ->
 				let client_headers_ready = Cohttp.Header.remove client_headers "Service-Token"
 				|> fun h -> Cohttp.Header.remove h "Host" (* Duplicate automatically added by Cohttp *)
-				|> fun h -> Cohttp.Header.add h "X-Forwarded-For" (get_addr_from_ch ch) in
+				|> fun h -> Cohttp.Header.add h "X-Forwarded-For" client_ip in
 				let remote_call = Client.call ~headers:client_headers_ready ~body:client_body (Request.meth req) client_uri
 				>>= fun (res, provider_body) ->
 					let har_wait = (Archive.get_timestamp_ms ()) - t0 - har_send in
 					let provider_headers = Cohttp.Header.remove (Response.headers res) "content-length" in (* Because we're using Transfer-Encoding: Chunked *)
 					let t_provider_length = Body.to_stream provider_body |> Lwt_stream.clone |> stream_length in
 					let har_receive = (Archive.get_timestamp_ms ()) - t0 - har_wait in
-					let _ = send_har archive req res t_client_length t_provider_length (har_send, har_wait, har_receive) in
+					let _ = send_har archive req res t_client_length t_provider_length client_ip (har_send, har_wait, har_receive) startedDateTime in
 					Server.respond ~headers:provider_headers ~status:(Response.status res) ~body:provider_body ()
 				in
 				Lwt.pick [remote_call; Lwt_unix.timeout 8.]
@@ -83,7 +115,7 @@ let make_server port https debug concurrent key =
 				let t_provider_length = Body.to_stream body |> Lwt_stream.clone |> stream_length in
 				match Option.first_some local_archive global_archive with
 				| None -> return ()
-				| Some archive -> send_har archive req res t_client_length t_provider_length (har_send, har_wait, 0)
+				| Some archive -> send_har archive req res t_client_length t_provider_length client_ip (har_send, har_wait, 0) startedDateTime
 			in t_res
 		in
 		let _ = response >>= fun _ -> return (nb_current := (!nb_current - 1)) in

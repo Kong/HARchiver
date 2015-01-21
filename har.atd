@@ -1,6 +1,10 @@
+type message = {
+	serviceToken: string;
+	har: har;
+}
+
 type har = {
 	version: string;
-	serviceToken: string;
 	creator: creator;
 	entries: entry list;
 }
@@ -16,11 +20,18 @@ type creator = {
 }
 
 type entry = {
-	startedDateTime: int;
+	serverIPAddress: string;
+	clientIPAddress: string;
+	startedDateTime: string;
+	time: int;
 	request: request;
 	response: response;
-	cache: cache;
 	timings: timings;
+}
+
+type content = {
+	size: int;
+	?mimeType: string option;
 }
 
 type request = {
@@ -31,11 +42,7 @@ type request = {
 	headers: name_value list;
 	headersSize: int;
 	bodySize: int;
-}
-
-type response_content = {
-	size: int;
-	mimeType: string;
+	content: content;
 }
 
 type response = {
@@ -43,14 +50,9 @@ type response = {
 	statusText: string;
 	httpVersion: string;
 	headers: name_value list;
-	content: response_content;
-	redirectUrl: string;
 	headersSize: int;
 	bodySize: int;
-}
-
-type cache = {
-	?x: int option;
+	content: content;
 }
 
 type timings = {

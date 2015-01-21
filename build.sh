@@ -12,6 +12,7 @@ corebuild \
 	-pkg lwt \
 	-pkg lwt.syntax \
 	-pkg cohttp.lwt \
+	-pkg dns.lwt \
 	-pkg lwt-zmq \
 	-pkg atd \
 	-pkg atdgen \

@@ -13,6 +13,8 @@ open Cohttp_lwt_unix
 open Cohttp_lwt_unix_io
 module Body = Cohttp_lwt_body
 
+#require "dns.lwt"
+
 #require "atd"
 #require "atdgen"
 #load "har_t.cmo"
