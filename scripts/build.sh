@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-./clean.sh
+./scripts/clean.sh
 
 atdgen -t -j-std har.atd
 atdgen -j -j-std har.atd
@@ -22,4 +22,4 @@ corebuild \
 cp main.native harchiver
 rm main.native
 
-./clean.sh
+./scripts/clean.sh

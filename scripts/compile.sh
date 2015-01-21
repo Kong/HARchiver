@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-./clean.sh
+./scripts/clean.sh
 
 atdgen -t -j-std har.atd
 atdgen -j -j-std har.atd

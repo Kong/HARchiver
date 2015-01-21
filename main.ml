@@ -51,7 +51,7 @@ let make_server port https debug concurrent key =
 
 	let send_har archive req res t_client_length t_provider_length client_ip timings startedDateTime =
 		dns_lookup (req |> Request.uri |> Uri.host |> Option.value ~default:"")
-		>>= fun server_ip ->
+		>>= fun r_server_ip ->
 			t_client_length
 		>>= fun client_length ->
 			t_provider_length
@@ -65,7 +65,7 @@ let make_server port https debug concurrent key =
 				req_length = client_length;
 				res_length = provider_length;
 				client_ip;
-				server_ip = (server_ip |> Result.ok |> Option.value ~default:"");
+				server_ip = (r_server_ip |> Result.ok |> Option.value ~default:"");
 				timings;
 				startedDateTime;
 			} in

@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-./build.sh
+./scripts/build.sh
 
 patchelf --set-rpath '$ORIGIN/' harchiver
 cp harchiver release/
