@@ -43,10 +43,14 @@ let get_har_creator = {
 	version = "1.2.0";
 }
 
-let get_har_content raw_headers size = {
-	size;
-	mimeType = get_unique_header raw_headers "content-type";
-}
+let get_har_content raw_headers size =
+	if size > 0 then
+		Some {
+			size;
+			mimeType = get_unique_header raw_headers "content-type" |> Option.value ~default:"application/octet-stream";
+		}
+	else
+		None
 
 let get_har_request req req_length =
 	let raw_headers = req |> Request.headers |> Cohttp.Header.to_list in

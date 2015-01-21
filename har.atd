@@ -31,7 +31,7 @@ type entry = {
 
 type content = {
 	size: int;
-	?mimeType: string option;
+	mimeType: string;
 }
 
 type request = {
@@ -42,7 +42,7 @@ type request = {
 	headers: name_value list;
 	headersSize: int;
 	bodySize: int;
-	content: content;
+	?content: content option;
 }
 
 type response = {
@@ -52,7 +52,7 @@ type response = {
 	headers: name_value list;
 	headersSize: int;
 	bodySize: int;
-	content: content;
+	?content: content option;
 }
 
 type timings = {

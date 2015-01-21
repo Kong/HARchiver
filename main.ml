@@ -16,13 +16,15 @@ let get_ZMQ_sock remote =
 	print_endline ("Attempting to connect to "^remote);
 	Lwt_zmq.Socket.of_socket raw_sock
 
-let stream_length stream = Lwt_stream.fold (fun a b -> (String.length a)+b) stream 0
+let body_length body =
+	let clone = body |> Body.to_stream |> Lwt_stream.clone in
+	Lwt_stream.fold (fun a b -> (String.length a)+b) clone 0
 
-let resolver_t = Dns_resolver_unix.create ()
+let t_resolver = Dns_resolver_unix.create ()
 
 let dns_lookup host =
 	let open Dns.Packet in
-	resolver_t
+	t_resolver
 	>>= fun resolver ->
 		Dns_resolver_unix.resolve resolver Q_IN Q_A (Dns.Name.string_to_domain_name host)
 	>>= fun response ->
@@ -31,7 +33,8 @@ let dns_lookup host =
 		| Some answer ->
 			match answer.rdata with
 			| A ipv4 -> return (Ok (Ipaddr.V4.to_string ipv4))
-			| _ -> return (Error "Not ipv4")
+			| AAAA ipv6 -> return (Ok (Ipaddr.V6.to_string ipv6))
+			| _ -> return (Error "Not ipv4/ipv6")
 
 let get_addr_from_ch = function
 | CLU.TCP {CLU.fd; ip; port} -> begin
@@ -45,13 +48,14 @@ let make_server port https debug concurrent key =
 	let nb_current = ref 0 in
 	let sock = get_ZMQ_sock "tcp://socket.apianalytics.com:5000" in
 	let global_archive = Option.map ~f:(fun k -> (module Archive.Make (struct let key = k end) : Archive.Sig_make)) key in
+
 	let send_har archive req res t_client_length t_provider_length client_ip timings startedDateTime =
-		t_client_length
+		dns_lookup (req |> Request.uri |> Uri.host |> Option.value ~default:"")
+		>>= fun server_ip ->
+			t_client_length
 		>>= fun client_length ->
 			t_provider_length
 		>>= fun provider_length ->
-			dns_lookup (req |> Request.uri |> Uri.host |> Option.value ~default:"")
-		>>= fun server_ip ->
 			let module KeyArchive = (val archive : Archive.Sig_make) in
 
 			let open Archive in
@@ -70,14 +74,14 @@ let make_server port https debug concurrent key =
 			let _ = if debug then Lwt_io.printl har_string else return () in
 			Lwt_zmq.Socket.send sock har_string
 	in
-	let callback (ch,_) req client_body =
+	let callback (ch, _) req client_body =
 		let () = nb_current := (!nb_current + 1) in
 		let t0 = Archive.get_timestamp_ms () in
 		let startedDateTime = Archive.get_utc_time_string () in
 		let client_ip = get_addr_from_ch ch in
 		let client_uri = Request.uri req in
 		let client_headers = Request.headers req in
-		let t_client_length = Body.to_stream client_body |> Lwt_stream.clone |> stream_length in
+		let t_client_length = body_length client_body in
 		let har_send = (Archive.get_timestamp_ms ()) - t0 in
 		let local_archive = Option.map (Cohttp.Header.get client_headers "Service-Token") ~f:(fun k ->
 			(module Archive.Make (struct let key = k end) : Archive.Sig_make)) in
@@ -94,7 +98,7 @@ let make_server port https debug concurrent key =
 				>>= fun (res, provider_body) ->
 					let har_wait = (Archive.get_timestamp_ms ()) - t0 - har_send in
 					let provider_headers = Cohttp.Header.remove (Response.headers res) "content-length" in (* Because we're using Transfer-Encoding: Chunked *)
-					let t_provider_length = Body.to_stream provider_body |> Lwt_stream.clone |> stream_length in
+					let t_provider_length = body_length provider_body in
 					let har_receive = (Archive.get_timestamp_ms ()) - t0 - har_wait in
 					let _ = send_har archive req res t_client_length t_provider_length client_ip (har_send, har_wait, har_receive) startedDateTime in
 					Server.respond ~headers:provider_headers ~status:(Response.status res) ~body:provider_body ()
@@ -112,7 +116,7 @@ let make_server port https debug concurrent key =
 			let har_wait = (Archive.get_timestamp_ms ()) - t0 - har_send in
 			let t_res = Server.respond_error ~status:(Cohttp.Code.status_of_code error_code) ~body:error_text () in
 			let _ = t_res >>= fun (res, body) ->
-				let t_provider_length = Body.to_stream body |> Lwt_stream.clone |> stream_length in
+				let t_provider_length = body_length body in
 				match Option.first_some local_archive global_archive with
 				| None -> return ()
 				| Some archive -> send_har archive req res t_client_length t_provider_length client_ip (har_send, har_wait, 0) startedDateTime
@@ -121,7 +125,7 @@ let make_server port https debug concurrent key =
 		let _ = response >>= fun _ -> return (nb_current := (!nb_current - 1)) in
 		response
 	in
-	let conn_closed (_,_) = () in
+	let conn_closed (_, _) = () in
 	let config = Server.make ~callback ~conn_closed () in
 	let ctx = Cohttp_lwt_unix_net.init () in
 	let tcp_mode = `TCP (`Port port) in
