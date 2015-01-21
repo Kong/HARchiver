@@ -8,8 +8,8 @@
 *.cmxs
 *.cmxa
 _build/
+src/_build/
 node_modules/
-zmqtest/
 test.ml
 har_*.ml*
 harchiver
