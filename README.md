@@ -1,31 +1,19 @@
-harchiver
+HARchiver
 ===================
 
-Universal Lightweight analytics layer for apianalytics.com
+Universal lightweight standalone proxy for apianalytics.com that was made to be portable, fast and transparent.
 
-Made to be portable, fast and transparent. It lets HTTP/HTTPS traffic through and streams datapoints to apianalytics.com.
+## Usage
 
-## Install
-
-#### Linux
-
-```
-wget https://github.com/Mashape/harchiver/releases/download/v1.2.0/harchiver.tar.gz
-tar xzvf harchiver.tar.gz
-cd release
-```
-
-There's nothing else to do. Run it with `./harchiver`.
-
-##### Options
+First get your [API Analytics Service Token](http://www.apianalytics.com) and [install](#install) HARchiver.
 
 `harchiver PORT OPTIONAL_SERVICE_TOKEN`
 
-If a Service-Token isn't provided, then the HTTP header `Service-Token` needs to be set for every request.
+**Without `OPTIONAL_SERVICE_TOKEN` the HTTP header `Service-Token` needs to be set with every request.**
 
-`-help` for instructions.
+#### Optional Flags
 
-`-https PORT` to add HTTPS support. In that case, the files `key.cert` and `cert.pem` need to be in the same directory as the harchiver.
+`-https PORT` to add HTTPS support. The files `key.cert` and `cert.pem` need to be in the same directory as harchiver.
 
 `-c NB` to set a maximum number of concurrent requests.
 
@@ -33,15 +21,40 @@ If a Service-Token isn't provided, then the HTTP header `Service-Token` needs to
 
 `-version` for the version number.
 
-If the program reports a GLIBC error on startup, it's most likely because your Linux distribution is very old. Please open a Github Issue if the program doesn't start correctly.
+`-help` for usage instructions.
+
+### Example
+
+Start on port 15000 with your [API analytics](http://www.apianalytics.com) service token:
+
+```bash
+./harchiver 15000 api_analytics_token
+```
+
+Now send requests through the HARchiver using the `Host` header:
+
+```bash
+curl -H "Host: www.mocky.io" http://127.0.0.1:15000/v2/
+```
+
+## Install
+
+#### Linux
+
+```bash
+wget https://github.com/Mashape/harchiver/releases/download/v1.2.0/harchiver.tar.gz
+tar xzvf harchiver.tar.gz
+cd release
+./harchiver
+```
+**If the program reports a GLIBC error on startup, it's most likely because your Linux distribution is very old, please open a Github Issue.**
 
 #### Docker
 
-First, read the Linux instructions to learn the command line options.
-
 ##### HTTP only
 
-The only thing needed is to create a container with the correct port forwarding and command-line options from the image.
+The only thing needed is to create a container with the correct port forwarding and [command-line options](#usage) from the image.
+
 ```bash
 # Download the image
 sudo docker pull mashape/harchiver
@@ -52,11 +65,12 @@ sudo docker run -p 15000:15000 --name="harchiver_http" mashape/harchiver
 sudo docker run -p 15000:15000 --name="harchiver_http" mashape/harchiver /release/harchiver 15000 OPTIONAL_SERVICE_TOKEN
 ```
 
-There's now a container named `harchiver_http` that can be started easily with `sudo docker start harchiver_http`. That container can be removed and recreated from the `mashape/harchiver` image easily to change the command-line options.
+There's now a container named `harchiver_http` that can be started easily with `sudo docker start harchiver_http`. That container can be removed and recreated from the `mashape/harchiver` image easily to change the [command-line options](#usage).
 
 ##### With HTTPS
 
 The certificate and key must be copied into a new image based on the `mashape/harchiver` image.
+
 ```bash
 # Download the image
 sudo docker pull mashape/harchiver
@@ -79,14 +93,6 @@ sudo docker commit -m "Added https support" harchiver_http harchiver_image_https
 # Create a container from it
 sudo docker run -p 15000:15000 -p 15001:15001 --name="harchiver_https" harchiver_image_https /release/harchiver 15000 -https 15001 OPTIONAL_SERVICE_TOKEN
 ```
-
-There's now a container named `harchiver_https`!
-
-## Libraries
-
-This product includes software developed by the OpenSSL Project for use in the OpenSSL Toolkit (http://www.openssl.org/).
-
-This project ships with a compiled library of ZeroMQ, more specifically, the libzmq.so.4 file. As required by the LGPL license, you have been made aware that you are free to download and replace it with your own from the [official website](http://zeromq.org/intro:get-the-software).
 
 ## Compiling
 
@@ -122,3 +128,8 @@ Run `opam install core lwt ssl cohttp lwt-zmq atdgen dns utop`. If it fails, try
 
 You are now ready to compile the program. Run `./build.sh` in the Harchiver directory. If everything went fine until this point you'll see a `harchiver` file in the directory. Congrats!
 
+## Libraries
+
+This product includes software developed by the OpenSSL Project for use in the OpenSSL Toolkit (http://www.openssl.org/).
+
+This project ships with a compiled library of ZeroMQ, more specifically, the libzmq.so.4 file. As required by the LGPL license, you have been made aware that you are free to download and replace it with your own from the [official website](http://zeromq.org/intro:get-the-software).
