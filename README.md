@@ -1,17 +1,33 @@
 HARchiver
 ===================
 
-Universal lightweight standalone proxy for apianalytics.com that was made to be portable, fast and transparent.
+Universal lightweight proxy for apianalytics.com that was made to be portable, fast and transparent.
+
+## Quick Start
+
+First get your [API analytics](http://www.apianalytics.com) service token and [install HARchiver](#install). 
+
+Start HARchiver on port 15000 with your [API analytics](http://www.apianalytics.com) service token:
+
+```bash
+./harchiver 15000 api_analytics_token
+```
+
+Now you can send requests through the HARchiver using the `Host` header:
+
+```bash
+curl -H "Host: www.mocky.io" http://127.0.0.1:15000/v2/
+```
+
+That's it, your data is now available on [apianalytics.com](http://www.apianalytics.com)!
 
 ## Usage
 
-First get your [API Analytics Service Token](http://www.apianalytics.com) and [install](#install) HARchiver.
-
 `harchiver PORT OPTIONAL_SERVICE_TOKEN`
 
-**Without `OPTIONAL_SERVICE_TOKEN` the HTTP header `Service-Token` needs to be set with every request.**
+Without `OPTIONAL_SERVICE_TOKEN` the HTTP header `Service-Token` must be set on every request.
 
-#### Optional Flags
+##### Optional Flags
 
 `-https PORT` to add HTTPS support. The files `key.cert` and `cert.pem` need to be in the same directory as harchiver.
 
@@ -23,20 +39,6 @@ First get your [API Analytics Service Token](http://www.apianalytics.com) and [i
 
 `-help` for usage instructions.
 
-### Example
-
-Start on port 15000 with your [API analytics](http://www.apianalytics.com) service token:
-
-```bash
-./harchiver 15000 api_analytics_token
-```
-
-Now send requests through the HARchiver using the `Host` header:
-
-```bash
-curl -H "Host: www.mocky.io" http://127.0.0.1:15000/v2/
-```
-
 ## Install
 
 #### Linux
@@ -47,6 +49,7 @@ tar xzvf harchiver.tar.gz
 cd release
 ./harchiver
 ```
+
 **If the program reports a GLIBC error on startup, it's most likely because your Linux distribution is very old, please open a Github Issue.**
 
 #### Docker
