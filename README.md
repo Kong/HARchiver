@@ -7,7 +7,7 @@ Universal lightweight proxy for apianalytics.com that was made to be portable, f
 
 First get your [API analytics](http://www.apianalytics.com) service token and [install HARchiver](#install). 
 
-Start HARchiver on port 15000 with your [API analytics](http://www.apianalytics.com) service token:
+Start HARchiver on port 15000 with your API analytics service token:
 
 ```bash
 ./harchiver 15000 api_analytics_token
@@ -50,7 +50,7 @@ cd release
 ./harchiver
 ```
 
-**If the program reports a GLIBC error on startup, please open a Github Issue.**
+If the program reports a GLIBC error on startup, please [open a Github Issue](https://github.com/APIAnalytics/HARchiver/issues).
 
 #### Docker
 
