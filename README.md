@@ -50,7 +50,7 @@ cd release
 ./harchiver
 ```
 
-**If the program reports a GLIBC error on startup, it's most likely because your Linux distribution is very old, please open a Github Issue.**
+**If the program reports a GLIBC error on startup, please open a Github Issue.**
 
 #### Docker
 
