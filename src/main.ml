@@ -77,17 +77,17 @@ let make_server port https debug concurrent key =
 					startedDateTime;
 				} in
 
-				let har_string = KeyArchive.get_message archive_input |> string_of_message ~len:1024 in
+				let har_string = KeyArchive.get_message archive_input |> string_of_message in
 				Lwt.pick [
+					Lwt_zmq.Socket.send sock har_string;
 					Lwt_unix.sleep 5. >>= fun () -> raise (Cant_send_har har_string);
-					Lwt_zmq.Socket.send sock har_string
 				]
 			>>= fun () ->
 				if debug then Lwt_io.printlf "%s\n" har_string else return ()
 		) with ex ->
 			match ex with
 			| Cant_send_har har ->
-				Lwt_io.printlf "ERROR: Could not send this datapoint to apianalytics.com:\n%s\n" har
+				Lwt_io.printlf "ERROR: Could not flush this datapoint to the ZMQ driver within 5 seconds:\n%s\n" har
 			| e ->
 				return (print_endline ("Some other error\n"^(Exn.to_string e)))
 	in
