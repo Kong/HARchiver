@@ -4,6 +4,10 @@ type message = {
 }
 
 type har = {
+	log: log;
+}
+
+type log = {
 	version: string;
 	creator: creator;
 	entries: entry list;

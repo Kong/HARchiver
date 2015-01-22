@@ -39,7 +39,7 @@ let get_unique_header raw_headers desired =
 (* ================================================================================================ *)
 
 let get_har_creator = {
-	name = "Mashape HARchiver";
+	name = "ApiAnalytics HARchiver";
 	version = "1.2.0";
 }
 
@@ -93,10 +93,14 @@ let get_har_entry {req; res; req_length; res_length; client_ip; server_ip; timin
 	timings = get_har_timings (t1, t2, t3);
 }
 
-let get_har input = {
+let get_log input = {
 	version = "1.2";
 	creator = get_har_creator;
 	entries = [get_har_entry input];
+}
+
+let get_har input = {
+	log = get_log input;
 }
 
 (* ================================================================================================ *)

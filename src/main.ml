@@ -8,6 +8,7 @@ open Har_j
 module Body = Cohttp_lwt_body
 module CLU = Conduit_lwt_unix
 exception Too_many_requests
+exception Cant_send_har of string
 
 let get_ZMQ_sock remote =
 	let ctx = ZMQ.Context.create () in
@@ -22,19 +23,24 @@ let body_length body =
 
 let t_resolver = Dns_resolver_unix.create ()
 
-let dns_lookup host =
-	let open Dns.Packet in
-	t_resolver
-	>>= fun resolver ->
-		Dns_resolver_unix.resolve resolver Q_IN Q_A (Dns.Name.string_to_domain_name host)
-	>>= fun response ->
-		match List.hd response.answers with
-		| None -> return (Error "No answer")
-		| Some answer ->
-			match answer.rdata with
-			| A ipv4 -> return (Ok (Ipaddr.V4.to_string ipv4))
-			| AAAA ipv6 -> return (Ok (Ipaddr.V6.to_string ipv6))
-			| _ -> return (Error "Not ipv4/ipv6")
+let rec dns_lookup ?(retries=0) host =
+	try_lwt (
+		let open Dns.Packet in
+		t_resolver
+		>>= fun resolver ->
+			Lwt.pick [Dns_resolver_unix.resolve resolver Q_IN Q_A (Dns.Name.string_to_domain_name host); Lwt_unix.timeout 1.5]
+		>>= fun response ->
+			match List.hd response.answers with
+			| None -> return (Error "No answer")
+			| Some answer ->
+				match answer.rdata with
+				| A ipv4 -> return (Ok (Ipaddr.V4.to_string ipv4))
+				| AAAA ipv6 -> return (Ok (Ipaddr.V6.to_string ipv6))
+				| _ -> return (Error "Not ipv4/ipv6")
+	) with ex ->
+		match retries with
+		| 2 -> return (Error (Exn.to_string ex))
+		| i -> dns_lookup ~retries:(i + 1) host
 
 let get_addr_from_ch = function
 | CLU.TCP {CLU.fd; ip; port} -> begin
@@ -46,33 +52,44 @@ let get_addr_from_ch = function
 let make_server port https debug concurrent key =
 	let concurrency = Option.value ~default:Int.max_value concurrent in
 	let nb_current = ref 0 in
-	let sock = get_ZMQ_sock "tcp://socket.apianalytics.com:5000" in
+	let sock = get_ZMQ_sock "tcp://server.apianalytics.com:5000" in
 	let global_archive = Option.map ~f:(fun k -> (module Archive.Make (struct let key = k end) : Archive.Sig_make)) key in
 
 	let send_har archive req res t_client_length t_provider_length client_ip timings startedDateTime =
-		dns_lookup (req |> Request.uri |> Uri.host |> Option.value ~default:"")
-		>>= fun r_server_ip ->
-			t_client_length
-		>>= fun client_length ->
-			t_provider_length
-		>>= fun provider_length ->
-			let module KeyArchive = (val archive : Archive.Sig_make) in
+		try_lwt (
+			dns_lookup (req |> Request.uri |> Uri.host |> Option.value ~default:"")
+			>>= fun r_server_ip ->
+				t_client_length
+			>>= fun client_length ->
+				t_provider_length
+			>>= fun provider_length ->
+				let module KeyArchive = (val archive : Archive.Sig_make) in
 
-			let open Archive in
-			let archive_input = {
-				req;
-				res;
-				req_length = client_length;
-				res_length = provider_length;
-				client_ip;
-				server_ip = (r_server_ip |> Result.ok |> Option.value ~default:"");
-				timings;
-				startedDateTime;
-			} in
+				let open Archive in
+				let archive_input = {
+					req;
+					res;
+					req_length = client_length;
+					res_length = provider_length;
+					client_ip;
+					server_ip = (r_server_ip |> Result.ok |> Option.value ~default:"<error>");
+					timings;
+					startedDateTime;
+				} in
 
-			let har_string = KeyArchive.get_message archive_input |> string_of_message ~len:1024 in
-			let _ = if debug then Lwt_io.printl har_string else return () in
-			Lwt_zmq.Socket.send sock har_string
+				let har_string = KeyArchive.get_message archive_input |> string_of_message ~len:1024 in
+				Lwt.pick [
+					Lwt_unix.sleep 5. >>= fun () -> raise (Cant_send_har har_string);
+					Lwt_zmq.Socket.send sock har_string
+				]
+			>>= fun () ->
+				if debug then Lwt_io.printlf "%s\n" har_string else return ()
+		) with ex ->
+			match ex with
+			| Cant_send_har har ->
+				Lwt_io.printlf "ERROR: Could not send this datapoint to apianalytics.com:\n%s\n" har
+			| e ->
+				return (print_endline ("Some other error\n"^(Exn.to_string e)))
 	in
 	let callback (ch, _) req client_body =
 		let () = nb_current := (!nb_current + 1) in
