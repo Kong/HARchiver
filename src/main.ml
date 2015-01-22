@@ -28,7 +28,7 @@ let rec dns_lookup ?(retries=0) host =
 		let open Dns.Packet in
 		t_resolver
 		>>= fun resolver ->
-			Lwt.pick [Dns_resolver_unix.resolve resolver Q_IN Q_A (Dns.Name.string_to_domain_name host); Lwt_unix.timeout 1.5]
+			Lwt.pick [Dns_resolver_unix.resolve resolver Q_IN Q_A (Dns.Name.string_to_domain_name host); Lwt_unix.timeout 2.5]
 		>>= fun response ->
 			match List.hd response.answers with
 			| None -> return (Error "No answer")
@@ -39,7 +39,7 @@ let rec dns_lookup ?(retries=0) host =
 				| _ -> return (Error "Not ipv4/ipv6")
 	) with ex ->
 		match retries with
-		| 2 -> return (Error (Exn.to_string ex))
+		| 1 -> return (Error (Exn.to_string ex))
 		| i -> dns_lookup ~retries:(i + 1) host
 
 let get_addr_from_ch = function
@@ -80,16 +80,16 @@ let make_server port https debug concurrent key =
 				let har_string = KeyArchive.get_message archive_input |> string_of_message in
 				Lwt.pick [
 					Lwt_zmq.Socket.send sock har_string;
-					Lwt_unix.sleep 5. >>= fun () -> raise (Cant_send_har har_string);
+					Lwt_unix.sleep 20. >>= fun () -> raise (Cant_send_har har_string);
 				]
 			>>= fun () ->
 				if debug then Lwt_io.printlf "%s\n" har_string else return ()
 		) with ex ->
 			match ex with
 			| Cant_send_har har ->
-				Lwt_io.printlf "ERROR: Could not flush this datapoint to the ZMQ driver within 5 seconds:\n%s\n" har
+				Lwt_io.printlf "ERROR: Could not flush this datapoint to the ZMQ driver within 20 seconds:\n%s\n" har
 			| e ->
-				return (print_endline ("Some other error\n"^(Exn.to_string e)))
+				Lwt_io.printlf "ERROR:\n%s\n%s" (Exn.to_string e) (Exn.backtrace ())
 	in
 	let callback (ch, _) req client_body =
 		let () = nb_current := (!nb_current + 1) in
