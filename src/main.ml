@@ -23,7 +23,7 @@ let body_length body =
 
 let resolvers = Lwt_pool.create 2 ~check:(fun x f -> f false) Dns_resolver_unix.create
 
-let rec dns_lookup ?(retries=0) host =
+let rec dns_lookup host =
 	Lwt_pool.use resolvers (fun resolver ->
 		try_lwt (
 			let open Dns.Packet in
@@ -37,9 +37,7 @@ let rec dns_lookup ?(retries=0) host =
 					| AAAA ipv6 -> return (Ok (Ipaddr.V6.to_string ipv6))
 					| _ -> return (Error "Not ipv4/ipv6")
 		) with ex ->
-			match retries with
-			| 1 -> return (Error (Exn.to_string ex))
-			| i -> dns_lookup ~retries:(i + 1) host
+			return (Error (Exn.to_string ex))
 	)
 
 let get_addr_from_ch = function
@@ -56,7 +54,7 @@ let make_server port https debug concurrent timeout key =
 	let sock = get_ZMQ_sock "tcp://server.apianalytics.com:5000" in
 	let global_archive = Option.map ~f:(fun k -> (module Archive.Make (struct let key = k end) : Archive.Sig_make)) key in
 
-	let send_har archive req res t_client_length t_provider_length client_ip timings startedDateTime =
+	let send_har archive req res t_client_length t_provider_length client_ip (t0, har_send, har_wait) startedDateTime =
 		try_lwt (
 			dns_lookup (req |> Request.uri |> Uri.host |> Option.value ~default:"")
 			>>= fun r_server_ip ->
@@ -74,7 +72,7 @@ let make_server port https debug concurrent timeout key =
 					res_length = provider_length;
 					client_ip;
 					server_ip = (r_server_ip |> Result.ok |> Option.value ~default:"<error>");
-					timings;
+					timings = (har_send, har_wait, ((get_timestamp_ms ()) - t0 - har_wait));
 					startedDateTime;
 				} in
 
@@ -100,9 +98,9 @@ let make_server port https debug concurrent timeout key =
 		let client_uri = Request.uri req in
 		let client_headers = Request.headers req in
 		let t_client_length = body_length client_body in
-		let har_send = (Archive.get_timestamp_ms ()) - t0 in
 		let local_archive = Option.map (Cohttp.Header.get client_headers "Service-Token") ~f:(fun k ->
 			(module Archive.Make (struct let key = k end) : Archive.Sig_make)) in
+		let har_send = (Archive.get_timestamp_ms ()) - t0 in
 
 		let response = try_lwt (
 			if !nb_current > concurrency then Lwt.fail Too_many_requests else
@@ -117,8 +115,7 @@ let make_server port https debug concurrent timeout key =
 					let har_wait = (Archive.get_timestamp_ms ()) - t0 - har_send in
 					let provider_headers = Cohttp.Header.remove (Response.headers res) "content-length" in (* Because we're using Transfer-Encoding: Chunked *)
 					let t_provider_length = body_length provider_body in
-					let har_receive = (Archive.get_timestamp_ms ()) - t0 - har_wait in
-					let _ = send_har archive req res t_client_length t_provider_length client_ip (har_send, har_wait, har_receive) startedDateTime in
+					let _ = send_har archive req res t_client_length t_provider_length client_ip (t0, har_send, har_wait) startedDateTime in
 					Server.respond ~headers:provider_headers ~status:(Response.status res) ~body:provider_body ()
 				in
 				Lwt.pick [remote_call; Lwt_unix.timeout call_timeoout]
@@ -137,7 +134,7 @@ let make_server port https debug concurrent timeout key =
 				let t_provider_length = body_length body in
 				match Option.first_some local_archive global_archive with
 				| None -> return ()
-				| Some archive -> send_har archive req res t_client_length t_provider_length client_ip (har_send, har_wait, 0) startedDateTime
+				| Some archive -> send_har archive req res t_client_length t_provider_length client_ip (t0, har_send, har_wait) startedDateTime
 			in t_res
 		in
 		let _ = response >>= fun _ -> return (nb_current := (!nb_current - 1)) in
