@@ -5,7 +5,7 @@ Universal lightweight proxy for apianalytics.com that was made to be portable, f
 
 ## Quick Start
 
-First get your [API analytics](http://www.apianalytics.com) service token and [install HARchiver](#install). 
+First get your [API analytics](http://www.apianalytics.com) service token and [install HARchiver](#install).
 
 Start HARchiver on port 15000 with your API analytics service token:
 
@@ -29,11 +29,13 @@ Without `OPTIONAL_SERVICE_TOKEN` the HTTP header `Service-Token` must be set on 
 
 ##### Optional Flags
 
-`-https PORT` to add HTTPS support. The files `key.cert` and `cert.pem` need to be in the same directory as harchiver.
-
-`-c NB` to set a maximum number of concurrent requests.
+`-c NB` to change the maximum number of concurrent requests. The default is 300.
 
 `-debug` to output the generated data on-the-fly.
+
+`-https PORT` to add HTTPS support. The files `key.cert` and `cert.pem` need to be in the same directory as harchiver.
+
+`-t TIMEOUT` to change the default timeout for the remote server to respond. The default is 6 seconds.
 
 `-version` for the version number.
 

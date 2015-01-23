@@ -21,26 +21,26 @@ let body_length body =
 	let clone = body |> Body.to_stream |> Lwt_stream.clone in
 	Lwt_stream.fold (fun a b -> (String.length a)+b) clone 0
 
-let t_resolver = Dns_resolver_unix.create ()
+let resolvers = Lwt_pool.create 2 ~check:(fun x f -> f false) Dns_resolver_unix.create
 
 let rec dns_lookup ?(retries=0) host =
-	try_lwt (
-		let open Dns.Packet in
-		t_resolver
-		>>= fun resolver ->
+	Lwt_pool.use resolvers (fun resolver ->
+		try_lwt (
+			let open Dns.Packet in
 			Lwt.pick [Dns_resolver_unix.resolve resolver Q_IN Q_A (Dns.Name.string_to_domain_name host); Lwt_unix.timeout 2.5]
-		>>= fun response ->
-			match List.hd response.answers with
-			| None -> return (Error "No answer")
-			| Some answer ->
-				match answer.rdata with
-				| A ipv4 -> return (Ok (Ipaddr.V4.to_string ipv4))
-				| AAAA ipv6 -> return (Ok (Ipaddr.V6.to_string ipv6))
-				| _ -> return (Error "Not ipv4/ipv6")
-	) with ex ->
-		match retries with
-		| 1 -> return (Error (Exn.to_string ex))
-		| i -> dns_lookup ~retries:(i + 1) host
+			>>= fun response ->
+				match List.hd response.answers with
+				| None -> return (Error "No answer")
+				| Some answer ->
+					match answer.rdata with
+					| A ipv4 -> return (Ok (Ipaddr.V4.to_string ipv4))
+					| AAAA ipv6 -> return (Ok (Ipaddr.V6.to_string ipv6))
+					| _ -> return (Error "Not ipv4/ipv6")
+		) with ex ->
+			match retries with
+			| 1 -> return (Error (Exn.to_string ex))
+			| i -> dns_lookup ~retries:(i + 1) host
+	)
 
 let get_addr_from_ch = function
 | CLU.TCP {CLU.fd; ip; port} -> begin
@@ -49,8 +49,9 @@ let get_addr_from_ch = function
 	| Lwt_unix.ADDR_UNIX path -> sprintf "sock:%s" path end
 | _ -> ""
 
-let make_server port https debug concurrent key =
-	let concurrency = Option.value ~default:Int.max_value concurrent in
+let make_server port https debug concurrent timeout key =
+	let concurrency = Option.value ~default:300 concurrent in
+	let call_timeoout = Option.value ~default:6. timeout in
 	let nb_current = ref 0 in
 	let sock = get_ZMQ_sock "tcp://server.apianalytics.com:5000" in
 	let global_archive = Option.map ~f:(fun k -> (module Archive.Make (struct let key = k end) : Archive.Sig_make)) key in
@@ -80,7 +81,7 @@ let make_server port https debug concurrent key =
 				let har_string = KeyArchive.get_message archive_input |> string_of_message in
 				Lwt.pick [
 					Lwt_zmq.Socket.send sock har_string;
-					Lwt_unix.sleep 20. >>= fun () -> raise (Cant_send_har har_string);
+					Lwt_unix.sleep 20. >>= fun () -> Lwt.fail (Cant_send_har har_string);
 				]
 			>>= fun () ->
 				if debug then Lwt_io.printlf "%s\n" har_string else return ()
@@ -104,9 +105,9 @@ let make_server port https debug concurrent key =
 			(module Archive.Make (struct let key = k end) : Archive.Sig_make)) in
 
 		let response = try_lwt (
-			if !nb_current > concurrency then raise Too_many_requests else
+			if !nb_current > concurrency then Lwt.fail Too_many_requests else
 			match Option.first_some local_archive global_archive with
-			| None -> raise (Failure "Service-Token header missing")
+			| None -> Lwt.fail (Failure "Service-Token header missing")
 			| Some archive ->
 				let client_headers_ready = Cohttp.Header.remove client_headers "Service-Token"
 				|> fun h -> Cohttp.Header.remove h "Host" (* Duplicate automatically added by Cohttp *)
@@ -120,7 +121,7 @@ let make_server port https debug concurrent key =
 					let _ = send_har archive req res t_client_length t_provider_length client_ip (har_send, har_wait, har_receive) startedDateTime in
 					Server.respond ~headers:provider_headers ~status:(Response.status res) ~body:provider_body ()
 				in
-				Lwt.pick [remote_call; Lwt_unix.timeout 8.]
+				Lwt.pick [remote_call; Lwt_unix.timeout call_timeoout]
 		) with ex ->
 			let (error_code, error_text) = match ex with
 			| Lwt_unix.Timeout ->
@@ -162,7 +163,7 @@ let make_server port https debug concurrent key =
 			let _ = Lwt_io.printf "An HTTPS error occured. Make sure both cert.pem and key.pem are located in the current harchiver directory\n%s\nOnly HTTP mode was started\n\n" (Exn.to_string e) in
 			tcp_server
 
-let start port https debug concurrent key () = Lwt_unix.run (make_server port https debug concurrent key)
+let start port https debug concurrent timeout key () = Lwt_unix.run (make_server port https debug concurrent timeout key)
 
 let command =
 	Command.basic
@@ -174,8 +175,9 @@ let command =
 			empty
 			+> anon ("port" %: int)
 			+> flag "https" (optional int) ~doc:" Pass the desired HTTPS port. This also means that the files 'cert.pem' and 'key.pem' must be present in the current directory."
-			+> flag "debug" no_arg ~doc:" Print generated HARs on-the-fly"
-			+> flag "c" (optional int) ~doc:" Set a maximum number of concurrent requests"
+			+> flag "debug" no_arg ~doc:" Print generated HARs once they've been flushed to ApiAnalytics.com."
+			+> flag "c" (optional int) ~doc:" Set a maximum number of concurrent requests. This is 300 by default. Beyond that, your kernel might start complaining about the number of open network sockets."
+			+> flag "t" (optional float) ~doc:" Timeout, in seconds. Close the connection if the remote server doesn't respond before the timeout expires. This is 6 seconds by default."
 			+> anon (maybe ("service_token" %: string))
 		)
 		start
