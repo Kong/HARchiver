@@ -7,6 +7,8 @@ Universal lightweight proxy for apianalytics.com that was made to be portable, f
 
 First get your [API analytics](http://www.apianalytics.com) service token and [install HARchiver](#install).
 
+### For API consumers
+
 Start HARchiver on port 15000 with your API analytics service token:
 
 ```bash
@@ -16,7 +18,23 @@ Start HARchiver on port 15000 with your API analytics service token:
 Now you can send requests through the HARchiver using the `Host` header:
 
 ```bash
-curl -H "Host: www.mocky.io" http://127.0.0.1:15000/v2/
+curl -H "Host: httpconsole.com" http://127.0.0.1:15000/request
+```
+
+That's it, your data is now available on [apianalytics.com](http://www.apianalytics.com)!
+
+### For API providers
+
+Start HARchiver on port 15000 in reverse-proxy mode with your API analytics service token:
+
+```bash
+./harchiver 15000 -reverse 10.1.2.3:8080 api_analytics_token
+```
+
+In this example, `10.1.2.3:8080` is the location of your API. All incoming requests will be directed there. You can read the `Host` header to inspect what service the client requested.
+
+```bash
+curl http://127.0.0.1:15000/some/url/on/the/api
 ```
 
 That's it, your data is now available on [apianalytics.com](http://www.apianalytics.com)!
@@ -35,6 +53,8 @@ Without `OPTIONAL_SERVICE_TOKEN` the HTTP header `Service-Token` must be set on 
 
 `-https PORT` to add HTTPS support. The files `key.cert` and `cert.pem` need to be in the same directory as harchiver.
 
+`-reverse target` to start in reverse-proxy mode. See the example above.
+
 `-t TIMEOUT` to change the default timeout for the remote server to respond. The default is 6 seconds.
 
 `-version` for the version number.
@@ -46,7 +66,7 @@ Without `OPTIONAL_SERVICE_TOKEN` the HTTP header `Service-Token` must be set on 
 #### Linux
 
 ```bash
-wget https://github.com/Mashape/harchiver/releases/download/v1.2.0/harchiver.tar.gz
+wget https://github.com/Mashape/harchiver/releases/download/v1.3.0/harchiver.tar.gz
 tar xzvf harchiver.tar.gz
 cd release
 ./harchiver

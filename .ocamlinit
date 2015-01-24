@@ -21,6 +21,7 @@ module Body = Cohttp_lwt_body
 #load "har_j.cmo"
 open Har_j
 
+#load "settings.cmo"
 #load "archive.cmo"
 
 #require "ZMQ"

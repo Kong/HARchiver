@@ -39,8 +39,8 @@ let get_unique_header raw_headers desired =
 (* ================================================================================================ *)
 
 let get_har_creator = {
-	name = "ApiAnalytics HARchiver";
-	version = "1.2.0";
+	name = Settings.name;
+	version = Settings.version;
 }
 
 let get_har_content raw_headers size =

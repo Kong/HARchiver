@@ -12,8 +12,10 @@ ocamlfind ocamlc -c har_j.mli -package atdgen
 ocamlfind ocamlc -c har_t.ml -package atdgen
 ocamlfind ocamlc -c har_j.ml -package atdgen
 
+ocamlfind ocamlc -c settings.ml
 ocamlfind ocamlc -c archive.mli -thread -package core,lwt,cohttp.lwt
 ocamlfind ocamlc -c archive.ml -thread -package core,lwt,cohttp.lwt
+ocamlfind ocamlc -c proxy.mli -thread -package lwt
 ocamlfind ocamlc -c proxy.ml -thread -package core,lwt,lwt.syntax,cohttp.lwt,lwt-zmq,dns -syntax camlp4o
 
 mv *.cm* ..
