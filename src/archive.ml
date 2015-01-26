@@ -19,6 +19,7 @@ type t_get_message =  t_input -> message
 (* ================================================================================================ *)
 
 let get_timestamp_ms () = Time.now () |> Time.to_float |> ( *. ) 1000. |> Int.of_float
+let get_timestamp () = Time.now () |> Time.to_float |> Int.of_float
 let get_utc_time_string () = Time.now () |> Time.to_string_abs ~zone:Core.Zone.utc
 
 let name_value_of_query tl =

@@ -23,6 +23,7 @@ open Har_j
 
 #load "settings.cmo"
 #load "archive.cmo"
+#load "cache.cmo"
 
 #require "ZMQ"
 #require "lwt-zmq"
