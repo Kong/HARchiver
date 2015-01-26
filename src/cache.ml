@@ -52,17 +52,17 @@ let get c ~key ~exp ~thunk =
 	| None ->
 		(* Go get it yourself *)
 		let new_cached = {
-			element=None;
-			t_expire=(make_expire c key exp);
-			waiting=[];
+			element = None;
+			t_expire = (make_expire c key exp);
+			waiting = [];
 		}
 		in
 		let _ = Hashtbl.add c ~key ~data:new_cached in
 		thunk ()
 		>>= fun res ->
 			(* There's a response, remove the expiration thread and wake every thread up *)
-			let () = Lwt.cancel new_cached.t_expire in
-			let () = List.iter ~f:(fun w -> Lwt.wakeup w res) new_cached.waiting in
+			Lwt.cancel new_cached.t_expire;
+			List.iter ~f:(fun w -> Lwt.wakeup w res) new_cached.waiting;
 			let () = match res with
 			| Ok v ->
 				put c key v exp

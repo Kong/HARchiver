@@ -45,9 +45,9 @@ let dns_lookup host =
 		)
 	)
 
-let make_server port https reverse debug concurrent timeout key =
+let make_server port https reverse debug concurrent timeout dev key =
 	let nb_current = ref 0 in
-	let sock = get_ZMQ_sock "tcp://server.apianalytics.com:5000" in
+	let sock = get_ZMQ_sock (if dev then Settings.apianalytics_staging else Settings.apianalytics_prod) in
 	let global_archive = Option.map ~f:(fun k -> (module Archive.Make (struct let key = k end) : Archive.Sig_make)) key in
 
 	let send_har archive t_dns req res t_client_length t_provider_length client_ip (t0, har_send, har_wait) startedDateTime =
@@ -139,7 +139,7 @@ let make_server port https reverse debug concurrent timeout key =
 			in
 			let har_wait = (Archive.get_timestamp_ms ()) - t0 - har_send in
 			let t_res =
-				Lwt_unix.sleep 0.3
+				Lwt_unix.sleep Settings.http_error_wait
 				>>= fun () ->
 					Server.respond_error ~status:(Cohttp.Code.status_of_code error_code) ~body:error_text ()
 			in
