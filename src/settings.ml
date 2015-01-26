@@ -1,4 +1,4 @@
-let version = "1.3.0"
+let version = "1.3.1"
 let name = "ApiAnalytics HARchiver"
 
 let apianalytics_prod = "tcp://socket.apianalytics.com:5000"
