@@ -151,7 +151,7 @@ Run `opam install core lwt ssl cohttp lwt-zmq atdgen dns utop`. If it fails, try
 
 ####5- Build it
 
-You are now ready to compile the program. Run `./build.sh` in the Harchiver directory. If everything went fine until this point you'll see a `harchiver` file in the directory. Congrats!
+You are now ready to compile the program. Run `make` in the Harchiver directory. If everything went fine until this point you'll see a `harchiver` file in the directory. Congrats!
 
 ## Libraries
 

@@ -117,7 +117,6 @@ let make_server port https reverse debug concurrent timeout dev key =
 			| None -> Lwt.fail (Failure "Service-Token header missing")
 			| Some archive ->
 				let client_headers_ready = Cohttp.Header.remove client_headers "Service-Token"
-				|> fun h -> Cohttp.Header.remove h "Host" (* Duplicate automatically added by Cohttp *)
 				|> fun h -> Cohttp.Header.add h "X-Forwarded-For" client_ip in
 				let remote_call = Client.call ~headers:client_headers_ready ~body:client_body (Request.meth req) target
 				>>= fun (res, provider_body) ->

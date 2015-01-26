@@ -1,7 +1,7 @@
 open Core.Std
 open Lwt
 
-let rec start port https reverse debug concurrent timeout dev key () =
+let start port https reverse debug concurrent timeout dev key () =
 	Lwt_unix.run (
 		Proxy.make_server
 		port
