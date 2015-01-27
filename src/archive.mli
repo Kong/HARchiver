@@ -22,5 +22,3 @@ module Make : functor (X : Sig_arg) -> Sig_make
 val get_timestamp : unit -> int
 val get_timestamp_ms : unit -> int
 val get_utc_time_string : unit -> string
-
-val get_unique_header : ('a * 'b) list -> 'a -> 'b option

@@ -4,7 +4,7 @@ let name = "ApiAnalytics HARchiver"
 let apianalytics_prod = "tcp://socket.apianalytics.com:5000"
 let apianalytics_staging = "tcp://server.apianalytics.com:5000"
 
-let concurrent = 300
+let concurrent = 500
 let timeout = 6.
 
 let zmq_flush_timeout = 20.

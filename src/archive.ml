@@ -16,26 +16,9 @@ type t_input = {
 
 type t_get_message =  t_input -> message
 
-(* ================================================================================================ *)
-
 let get_timestamp_ms () = Time.now () |> Time.to_float |> ( *. ) 1000. |> Int.of_float
 let get_timestamp () = Time.now () |> Time.to_float |> Int.of_float
 let get_utc_time_string () = Time.now () |> Time.to_string_abs ~zone:Core.Zone.utc
-
-let name_value_of_query tl =
-	List.map ~f:(fun (name, values) ->
-		let value = String.concat values in
-		{name; value}
-	) tl
-
-let name_value_of_headers tl =
-	List.map ~f:(fun (name, value) -> {name; value}) tl
-
-let length_of_headers raw_headers =
-	raw_headers |> Cohttp.Header.to_lines |> List.fold_left ~init:0 ~f:(fun acc x -> acc+(Bytes.length x))
-
-let get_unique_header raw_headers desired =
-	List.filter_map raw_headers ~f:(fun (x,y) -> if x = desired then Some y else None) |> List.hd
 
 (* ================================================================================================ *)
 
@@ -44,38 +27,40 @@ let get_har_creator = {
 	version = Settings.version;
 }
 
-let get_har_content raw_headers size =
+let get_har_content headers size =
 	if size > 0 then
 		Some {
 			size;
-			mimeType = get_unique_header raw_headers "content-type" |> Option.value ~default:"application/octet-stream";
+			mimeType = Cohttp.Header.get headers "content-type" |> Option.value ~default:"application/octet-stream";
 		}
 	else
 		None
 
 let get_har_request req req_length =
-	let raw_headers = req |> Request.headers |> Cohttp.Header.to_list in
+	let headers = req |> Request.headers in
+	let raw_headers = headers |> Cohttp.Header.to_list in
 	{
 		meth = Cohttp.Code.string_of_method (Request.meth req);
 		url = Uri.to_string (Request.uri req);
 		httpVersion = Cohttp.Code.string_of_version (Request.version req);
-		queryString = req |> Request.uri |> Uri.query |> name_value_of_query;
-		headers = raw_headers |> name_value_of_headers;
-		headersSize = req |> Request.headers |> length_of_headers;
+		queryString = req |> Request.uri |> Uri.query |> Http_utils.name_value_of_query;
+		headers = raw_headers |> Http_utils.name_value_of_headers;
+		headersSize = req |> Request.headers |> Http_utils.length_of_headers;
 		bodySize = req_length;
-		content = get_har_content raw_headers req_length;
+		content = get_har_content headers req_length;
 	}
 
 let get_har_reponse res res_length =
-	let raw_headers = res |> Response.headers |> Cohttp.Header.to_list in
+	let headers = res |> Response.headers in
+	let raw_headers = headers |> Cohttp.Header.to_list in
 	{
 		status = res |> Response.status |> Cohttp.Code.code_of_status;
 		statusText = res |> Response.status |> Cohttp.Code.string_of_status;
 		httpVersion = res |> Response.version |> Cohttp.Code.string_of_version;
-		headers = raw_headers |> name_value_of_headers;
-		headersSize = res |> Response.headers |> length_of_headers;
+		headers = raw_headers |> Http_utils.name_value_of_headers;
+		headersSize = res |> Response.headers |> Http_utils.length_of_headers;
 		bodySize = res_length;
-		content = get_har_content raw_headers res_length;
+		content = get_har_content headers res_length;
 	}
 
 let get_har_timings (send, wait, receive) = {

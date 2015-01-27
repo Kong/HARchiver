@@ -14,6 +14,8 @@ open Cohttp_lwt_unix_io
 module Body = Cohttp_lwt_body
 
 #require "dns.lwt"
+#require "ZMQ"
+#require "lwt-zmq"
 
 #require "atd"
 #require "atdgen"
@@ -22,8 +24,7 @@ module Body = Cohttp_lwt_body
 open Har_j
 
 #load "settings.cmo"
-#load "archive.cmo"
+#load "http_utils.cmo"
 #load "cache.cmo"
-
-#require "ZMQ"
-#require "lwt-zmq"
+#load "network.cmo"
+#load "archive.cmo"

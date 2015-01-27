@@ -47,7 +47,7 @@ Without `OPTIONAL_SERVICE_TOKEN` the HTTP header `Service-Token` must be set on 
 
 ##### Optional Flags
 
-`-c NB` to change the maximum number of concurrent requests. The default is 300.
+`-c NB` to change the maximum number of concurrent requests. The default is 500.
 
 `-debug` to output the generated data on-the-fly.
 
