@@ -91,19 +91,26 @@ let make_server port https reverse debug concurrent timeout dev key =
 				|> fun h -> Cohttp.Header.add h "X-Forwarded-For" client_ip
 				in
 
-				(* Do the remote call using the prefetched cached IP. The whole thing has a Lwt_pick timeout *)
+				(* Do the remote call using the prefetched cached IP. The whole thing has a Lwt.pick timeout *)
 				let remote_call = (
 					t_dns
 					>>= function
 						| Error e -> Lwt.fail (Cant_resolve_ip e)
 						| Ok server_ip ->
 							Client.call ~headers:client_headers_ready ~body:client_body (Request.meth req) (Uri.with_host target (Some server_ip))
-					>>= fun (res, provider_body) ->
+					>>= fun (provider_res, provider_body) ->
 						let har_wait = (Archive.get_timestamp_ms ()) - t0 - har_send in
-						let provider_headers = Cohttp.Header.remove (Response.headers res) "content-length" in (* Because we're using Transfer-Encoding: Chunked *)
 						let t_provider_length = Http_utils.body_length provider_body in
-						let _ = send_har archive req res t_client_length t_provider_length client_ip server_ip (t0, har_send, har_wait) startedDateTime in
-						Server.respond ~headers:provider_headers ~status:(Response.status res) ~body:provider_body ()
+						let _ = send_har archive req provider_res t_client_length t_provider_length client_ip server_ip (t0, har_send, har_wait) startedDateTime in
+						let provider_headers = Response.headers provider_res in
+						(* Keep the same Encoding as the remote server *)
+						let encoding = match Cohttp.Header.get provider_headers "content-length" with
+						| None -> Cohttp.Transfer.Chunked
+						| Some length -> Cohttp.Transfer.Fixed (Int64.of_string length)
+						in
+						(* Make the response manually to choose the right Encoding *)
+						let client_response = Response.make ~version:(Response.version provider_res) ~status:(Response.status provider_res) ~encoding ~headers:provider_headers () in
+						return (client_response, provider_body)
 				)
 				in
 				Lwt.pick [remote_call; Lwt_unix.timeout timeout]

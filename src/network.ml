@@ -31,8 +31,7 @@ let dns_lookup host =
 				| None -> return (Error "No answer")
 				| Some answer ->
 					match answer.rdata with
-					| A ipv4 ->
-						return (Ok (Ipaddr.V4.to_string ipv4))
+					| A ipv4 -> return (Ok (Ipaddr.V4.to_string ipv4))
 					| _ -> return (Error "Not ipv4")
 		)
 	)
