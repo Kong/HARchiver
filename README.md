@@ -47,7 +47,7 @@ Without `OPTIONAL_SERVICE_TOKEN` the HTTP header `Service-Token` must be set on 
 
 ##### Optional Flags
 
-`-c NB` to change the maximum number of concurrent requests. The default is 500.
+`-c NB` to change the maximum number of concurrent requests. The default is 300.
 
 `-debug` to output the generated data on-the-fly.
 
@@ -66,7 +66,7 @@ Without `OPTIONAL_SERVICE_TOKEN` the HTTP header `Service-Token` must be set on 
 #### Linux
 
 ```bash
-wget https://github.com/Mashape/harchiver/releases/download/v1.3.1/harchiver.tar.gz
+wget https://github.com/Mashape/harchiver/releases/download/v1.4.0/harchiver.tar.gz
 tar xzvf harchiver.tar.gz
 cd release
 ./harchiver

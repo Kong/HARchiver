@@ -7,3 +7,5 @@ build:
 	./scripts/build.sh
 package:
 	./scripts/package.sh
+docker:
+	sudo docker build --tag="mashape/harchiver:latest" .
