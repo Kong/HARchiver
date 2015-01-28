@@ -1,5 +1,4 @@
 open Core.Std
-open Lwt
 
 type ('a, 'b) t
 

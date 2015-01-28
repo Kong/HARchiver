@@ -1,5 +1,4 @@
 open Core.Std
-open Cohttp_lwt
 open Cohttp_lwt_unix
 open Har_j
 

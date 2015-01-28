@@ -88,7 +88,7 @@ let make_server port https reverse debug concurrent timeout dev key =
 			| None -> Lwt.fail (Failure "Service-Token header missing")
 			| Some archive ->
 				let client_headers_ready = Cohttp.Header.remove client_headers "Service-Token"
-				|> fun h -> Cohttp.Header.add h "X-Forwarded-For" client_ip
+				|> fun h -> Http_utils.set_x_forwarded_for h client_ip
 				in
 
 				(* Do the remote call using the prefetched cached IP. The whole thing has a Lwt.pick timeout *)
@@ -103,6 +103,7 @@ let make_server port https reverse debug concurrent timeout dev key =
 						let t_provider_length = Http_utils.body_length provider_body in
 						let _ = send_har archive req provider_res t_client_length t_provider_length client_ip server_ip (t0, har_send, har_wait) startedDateTime in
 						let provider_headers = Response.headers provider_res in
+
 						(* Keep the same Encoding as the remote server *)
 						let encoding = match Cohttp.Header.get provider_headers "content-length" with
 						| None -> Cohttp.Transfer.Chunked

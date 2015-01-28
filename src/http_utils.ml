@@ -1,6 +1,4 @@
 open Core.Std
-open Cohttp_lwt_unix
-open Lwt
 open Har_j
 
 module Body = Cohttp_lwt_body
@@ -18,10 +16,10 @@ let name_value_of_headers tl =
 let length_of_headers raw_headers =
 	raw_headers |> Cohttp.Header.to_lines |> List.fold_left ~init:0 ~f:(fun acc x -> acc+(Bytes.length x))
 
-let maybe_add_header headers k v =
-	match Cohttp.Header.get headers k with
-	| Some _ -> headers
-	| None -> Cohttp.Header.add headers k v
+let set_x_forwarded_for h client_ip =
+	match Cohttp.Header.get h "X-Forwarded-For" with
+	| None -> Cohttp.Header.add h "X-Forwarded-For" client_ip
+	| Some x -> Cohttp.Header.replace h "X-Forwarded-For" (x^", "^client_ip)
 
 (* Body *)
 let body_length body =

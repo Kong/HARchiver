@@ -1,6 +1,5 @@
 open Core.Std
 open Lwt
-open Cohttp_lwt_unix
 
 module CLU = Conduit_lwt_unix
 
