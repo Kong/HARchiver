@@ -82,41 +82,43 @@ The only thing needed is to create a container with the correct port forwarding 
 
 ```bash
 # Download the image
-sudo docker pull mashape/harchiver
+docker pull mashape/harchiver
 
 # Then make a container from it
-sudo docker run -p 15000:15000 --name="harchiver_http" mashape/harchiver
+docker run -p 15000:15000 --name="harchiver_http" mashape/harchiver
 # or with some options:
-sudo docker run -p 15000:15000 --name="harchiver_http" mashape/harchiver /release/harchiver 15000 OPTIONAL_SERVICE_TOKEN
+docker run -p 15000:15000 --name="harchiver_http" mashape/harchiver /release/harchiver 15000 OPTIONAL_SERVICE_TOKEN
 ```
 
-There's now a container named `harchiver_http` that can be started easily with `sudo docker start harchiver_http`. That container can be removed and recreated from the `mashape/harchiver` image easily to change the [command-line options](#usage).
+There's now a container named `harchiver_http` that can be started easily with `docker start harchiver_http`. That container can be removed and recreated from the `mashape/harchiver` image easily to change the [command-line options](#usage).
 
 ##### With HTTPS
 
 The certificate and key must be copied into a new image based on the `mashape/harchiver` image.
 
+On boot2docker, don't forget to run `$(boot2docker shellinit)`.
+
 ```bash
 # Download the image
-sudo docker pull mashape/harchiver
+docker pull mashape/harchiver
 
 # Then make a basic container
-sudo docker run -p 15000:15000 --name="harchiver_http" mashape/harchiver
+docker run -p 15000:15000 --name="harchiver_http" mashape/harchiver
 
 # Let it run and switch to a new terminal window
 # Remember that the certificate and key MUST be named cert.pem and key.pem
 # Copy the certificate and the key into the container
-sudo docker exec -i harchiver_http bash -c 'cat > /key.pem' < key.pem
-sudo docker exec -i harchiver_http bash -c 'cat > /cert.pem' < cert.pem
+docker exec -i harchiver_http bash -c 'cat > /key.pem' < key.pem
+docker exec -i harchiver_http bash -c 'cat > /cert.pem' < cert.pem
 
 # Stop the container
-sudo docker kill harchiver_http
+docker kill harchiver_http
 
 # Save it as a new image
-sudo docker commit -m "Added https support" harchiver_http harchiver_image_https
+docker commit -m "Added https support" harchiver_http harchiver_image_https
 
 # Create a container from it
-sudo docker run -p 15000:15000 -p 15001:15001 --name="harchiver_https" harchiver_image_https /release/harchiver 15000 -https 15001 OPTIONAL_SERVICE_TOKEN
+docker run -p 15000:15000 -p 15001:15001 --name="harchiver_https" harchiver_image_https /release/harchiver 15000 -https 15001 OPTIONAL_SERVICE_TOKEN
 ```
 
 ## Compiling
