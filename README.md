@@ -47,7 +47,7 @@ Without `OPTIONAL_SERVICE_TOKEN` the HTTP header `Service-Token` must be set on 
 
 ##### Optional Flags
 
-`-c NB` to change the maximum number of concurrent requests. The default is 300.
+`-c NB` to change the maximum number of concurrent requests. The default is 500.
 
 `-debug` to output the generated data on-the-fly.
 
@@ -66,7 +66,7 @@ Without `OPTIONAL_SERVICE_TOKEN` the HTTP header `Service-Token` must be set on 
 #### Linux
 
 ```bash
-wget https://github.com/Mashape/harchiver/releases/download/v1.4.0/harchiver.tar.gz
+wget https://github.com/Mashape/harchiver/releases/download/v1.4.1/harchiver.tar.gz
 tar xzvf harchiver.tar.gz
 cd release
 ./harchiver
@@ -149,7 +149,7 @@ Go to http://zeromq.org/intro:get-the-software and download the latest 4.0.x rel
 
 `apt-get install libssl-dev zlib1g-dev` (or `yum`).
 
-Run `opam install core lwt ssl cohttp lwt-zmq atdgen dns utop`. If it fails, try reinstalling ZMQ and make sure that you followed all the instructions carefully and have all the dependencies listed on the ZMQ page, then try again.
+Run `opam install core lwt conf-libev ssl cohttp lwt-zmq atdgen dns utop`. If it fails, try reinstalling ZMQ and make sure that you followed all the instructions carefully and have all the dependencies listed on the ZMQ page, then try again.
 
 ####5- Build it
 

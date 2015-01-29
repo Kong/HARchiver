@@ -1,6 +1,8 @@
 open Core.Std
 open Lwt
 
+let () = Lwt_engine.set ~transfer:true ~destroy:true (new Lwt_engine.libev)
+
 let start port https reverse debug concurrent timeout dev key () =
 	Lwt_unix.run (
 		Proxy.make_server
