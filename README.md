@@ -76,7 +76,7 @@ If the program reports a GLIBC error on startup, please [open a Github Issue](ht
 
 If you expect massive load, [up the server's `ulimit`](http://www.cyberciti.biz/faq/linux-increase-the-maximum-number-of-open-files/)
 
-#### Docker
+#### Docker (including OS X and Windows)
 
 ##### HTTP only
 
