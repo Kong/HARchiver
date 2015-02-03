@@ -73,6 +73,8 @@ let make_server port https reverse debug concurrent timeout dev key =
 			| HTTP -> Uri.with_scheme uri (Some "http")
 		in
 
+		let _ = Lwt_io.printlf "Original: %s\nFixed: %s" (Request.uri req |> Uri.to_string) (Uri.to_string target) in
+
 		(* Start fetching the target IP in advance *)
 		let target_to_resolve = target |> Uri.host |> Option.value ~default:"" in
 		let t_dns = Network.dns_lookup target_to_resolve in
