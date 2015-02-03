@@ -11,7 +11,7 @@ First get your [APIAnalytics.com](http://www.apianalytics.com) service token and
 Start HARchiver on port 15000 with your API analytics service token:
 
 ```shell
-./harchiver 15000 api_analytics_token
+./harchiver 15000 SERVICE_TOKEN
 ```
 
 Now you can send requests through the HARchiver using the `Host` header:
@@ -27,7 +27,7 @@ That's it, your data is now available on [APIAnalytics.com](http://www.apianalyt
 Start HARchiver on port 15000 in reverse-proxy mode with your API analytics service token:
 
 ```shell
-./harchiver 15000 -reverse 10.1.2.3:8080 api_analytics_token
+./harchiver 15000 -reverse 10.1.2.3:8080 SERVICE_TOKEN
 ```
 
 In this example, `10.1.2.3:8080` is the location of your API. All incoming requests will be directed there. You can read the `Host` header to inspect what service the client requested.
@@ -41,10 +41,10 @@ That's it, your data is now available on [APIAnalytics.com](http://www.apianalyt
 ## Usage
 
 ```shell
-harchiver PORT [SERVICE_TOKEN]
+harchiver PORT [OPTIONAL_SERVICE_TOKEN]
 ```
 
-- Without `SERVICE_TOKEN` the HTTP header `Service-Token` must be set on every request.
+- Without `OPTIONAL_SERVICE_TOKEN` the HTTP header `Service-Token` must be set on every request.
 
 ### Optional Flags
 
@@ -60,7 +60,7 @@ harchiver PORT [SERVICE_TOKEN]
 
 ## Installation
 
-### Linux Binary
+### Linux *(For OSX and Windows use [Docker](#docker))*
 
 ```shell
 wget https://github.com/Mashape/harchiver/releases/download/v1.4.2/harchiver.tar.gz
@@ -74,7 +74,7 @@ If the program reports a GLIBC error on startup, please [open a Github Issue](ht
 If you expect massive load, [up the server's `ulimit`](http://www.cyberciti.biz/faq/linux-increase-the-maximum-number-of-open-files/)
 
 
-### Using Docker *(recommended for OS X and Windows)*
+### Docker 
 
 #### HTTP only
 
