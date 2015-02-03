@@ -60,6 +60,20 @@ harchiver PORT [SERVICE_TOKEN]
 
 ## Installation
 
+### Linux Binary
+
+```shell
+wget https://github.com/Mashape/harchiver/releases/download/v1.4.2/harchiver.tar.gz
+tar xzvf harchiver.tar.gz
+cd release
+./harchiver
+```
+
+If the program reports a GLIBC error on startup, please [open a Github Issue](https://github.com/APIAnalytics/HARchiver/issues).
+
+If you expect massive load, [up the server's `ulimit`](http://www.cyberciti.biz/faq/linux-increase-the-maximum-number-of-open-files/)
+
+
 ### Using Docker *(recommended for OS X and Windows)*
 
 #### HTTP only
@@ -107,19 +121,6 @@ docker commit -m "Added https support" harchiver_http harchiver_image_https
 docker run -p 15000:15000 -p 15001:15001 --name="harchiver_https" harchiver_image_https /release/harchiver 15000 -https 15001 SERVICE_TOKEN
 ```
 
-## Linux Binary
-
-```shell
-wget https://github.com/Mashape/harchiver/releases/download/v1.4.2/harchiver.tar.gz
-tar xzvf harchiver.tar.gz
-cd release
-./harchiver
-```
-
-If the program reports a GLIBC error on startup, please [open a Github Issue](https://github.com/APIAnalytics/HARchiver/issues).
-
-If you expect massive load, [up the server's `ulimit`](http://www.cyberciti.biz/faq/linux-increase-the-maximum-number-of-open-files/)
-
 ## From Source
 
 *Not recommended for the faint of heart!*
@@ -144,7 +145,7 @@ This is necessary for some of the dependencies. Run `opam init`, then `opam swit
 
 Go to http://zeromq.org/intro:get-the-software and download the latest 4.0.x release POSIX tarball. Then scroll and follow the instructions in the `To build on UNIX-like systems` section.
 
-### 4- Install the dependencies for Harchiver.
+### 4- Install the dependencies for HARchiver.
 
 `apt-get install libssl-dev zlib1g-dev libev-dev` (or `yum`).
 
