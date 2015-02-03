@@ -25,3 +25,15 @@ let set_x_forwarded_for h client_ip =
 let body_length body =
 	let clone = body |> Body.to_stream |> Lwt_stream.clone in
 	Lwt_stream.fold (fun a b -> (String.length a)+b) clone 0
+
+(* Uri *)
+let fix_uri uri =
+	let ungarble uri host protocol_len =
+		uri
+		|> fun uri -> ((Uri.with_host uri (Some (String.slice host 0 (-protocol_len)))), (String.length host - protocol_len))
+		|> fun (uri, len) -> Uri.with_path uri (String.slice (Uri.path uri) (len + 2) 0)
+	in
+	match (uri |> Uri.host |> Option.value ~default:"") with
+	| host when String.is_suffix ~suffix:"http" host -> ungarble uri host 4
+	| host when String.is_suffix ~suffix:"https" host -> ungarble uri host 5
+	| _ -> uri

@@ -9,3 +9,5 @@ val length_of_headers : Cohttp.Header.t -> int
 val set_x_forwarded_for : Cohttp.Header.t -> string -> Cohttp.Header.t
 
 val body_length : Body.t -> int Lwt.t
+
+val fix_uri : Uri.t -> Uri.t

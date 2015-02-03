@@ -5,7 +5,7 @@ open Har_j
 
 type protocol = HTTP | HTTPS
 exception Too_many_requests
-exception Cant_resolve_ip of string
+exception Cant_resolve_ip of string * string
 exception Cant_send_har of string
 
 let make_server port https reverse debug concurrent timeout dev key =
@@ -54,11 +54,14 @@ let make_server port https reverse debug concurrent timeout dev key =
 		let startedDateTime = Archive.get_utc_time_string () in
 		let client_ip = Network.get_addr_from_ch ch in
 
+		(* This is necessary for now due to https://github.com/mirage/ocaml-cohttp/issues/248 *)
+		let uri = Request.uri req |> Http_utils.fix_uri in
+
 		(* Prepare the target *)
 		let target = (match reverse with
-		| None -> Request.uri req
+		| None -> uri
 		| Some (reverse_host, reverse_port) ->
-			Request.uri req
+			uri
 			|> fun uri -> Uri.with_host uri reverse_host
 			|> fun uri ->
 				match reverse_port with
@@ -71,7 +74,8 @@ let make_server port https reverse debug concurrent timeout dev key =
 		in
 
 		(* Start fetching the target IP in advance *)
-		let t_dns = Network.dns_lookup (target |> Uri.host |> Option.value ~default:"") in
+		let target_to_resolve = target |> Uri.host |> Option.value ~default:"" in
+		let t_dns = Network.dns_lookup target_to_resolve in
 
 		(* More bookeeping *)
 		let client_headers = Request.headers req in
@@ -95,7 +99,7 @@ let make_server port https reverse debug concurrent timeout dev key =
 				let remote_call = (
 					t_dns
 					>>= function
-						| Error e -> Lwt.fail (Cant_resolve_ip e)
+						| Error e -> Lwt.fail (Cant_resolve_ip (e, target_to_resolve))
 						| Ok server_ip ->
 							Client.call ~headers:client_headers_ready ~body:client_body (Request.meth req) (Uri.with_host target (Some server_ip))
 					>>= fun (provider_res, provider_body) ->
@@ -121,8 +125,8 @@ let make_server port https reverse debug concurrent timeout dev key =
 				(504, "504: The server timed out trying to establish a connection")
 			| Too_many_requests ->
 				(503, "503: The server is under heavy load, try again")
-			| Cant_resolve_ip ip ->
-				(400, "400: Hostname cannot be resolved")
+			| Cant_resolve_ip (err, host) ->
+				(400, ("400: Hostname cannot be resolved "^err^" ("^host^")"))
 			| _ ->
 				(500, ("500: "^(Exn.to_string ex)))
 			in
