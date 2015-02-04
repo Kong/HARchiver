@@ -172,15 +172,14 @@ This project ships with a compiled library of ZeroMQ, more specifically, the lib
 ###### Proxy
 
 ```
+
                                          +-------------+
                                     +--->| Private API |
-                                    |    +-------------+
-                    +------+----+   |
+                    +-----------+   |    +-------------+
 +-------------+     |           +---+    +-----------------+
-| Application +---->| HARChiver +------->| API Provider #1 |
+| Application +---->| HARchiver +------->| API Provider #1 |
 +-------------+     |           +---+    +-----------------+
-                    +-----------+   |
-                                    |    +-----------------+
+                    +-----------+   |    +-----------------+
                                     +--->| API Provider #2 |
                                          +-----------------+
 ```
@@ -188,19 +187,19 @@ This project ships with a compiled library of ZeroMQ, more specifically, the lib
 ###### Reverse Proxy
 
 ```
-                     +------+----+     +-----------------+
+                     +-----------+     +-----------------+
 +--------------+     |           |     |                 |
-| The Internet +---->| HARChiver +---->| Your API Server |
+| The Internet +---->| HARchiver +---->| Your API Server |
 +--------------+     |           |     |                 |
                      +-----------+     +-----------------+
 ```
 
 ###### Reverse Proxy *(with additional proxy layers)*
 
-*Here the SSL termination (aka decryption) can be either done in nginx/HAproxy or HARchiver.*
+*The SSL termination (aka decryption) can be either done in nginx/HAproxy or HARchiver.*
 
 ```
-                     +------+----+     +------+----+     +-----------------+
+                     +-----------+     +-----------+     +-----------------+
 +--------------+     | nginx     |     |           |     |                 |
 | The Internet +---->| HAproxy   +---->| HARChiver +---->| Your API Server |
 +--------------+     | ssl       |     |           |     |                 |
