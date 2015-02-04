@@ -13,6 +13,10 @@ Start HARchiver on port 15000 with your API analytics service token:
 ```shell
 ./harchiver 15000 SERVICE_TOKEN
 ```
+__It looks like this:__
+```
+Your code (Node, Ruby, etc) --> HARchiver --> API
+```
 
 Now you can send requests through the HARchiver using the `Host` header:
 
@@ -30,12 +34,19 @@ Start HARchiver on port 15000 in reverse-proxy mode with your API analytics serv
 ./harchiver 15000 -reverse 10.1.2.3:8080 SERVICE_TOKEN
 ```
 
-In this example, `10.1.2.3:8080` is the location of your API. All incoming requests will be directed there. You can read the `Host` header to inspect what service the client requested.
+In this example, `10.1.2.3:8080` is the location of your API. All incoming requests will be directed there. You can then read the `Host` header in your code to inspect what service the client requested, if necessary.
 
 ```shell
 curl http://127.0.0.1:15000/some/url/on/the/api
 ```
+__It looks like this:__
+```
+Internet --> HARchiver --> Your code (Node, Ruby, etc)
 
+# or if you also want to use nginx/HAproxy:
+# Here the SSL termination (aka decryption) can be either done in nginx/HAproxy or HARchiver.
+Internet --> nginx/HAproxy --> HARchiver --> Your code (Node, Ruby, etc)
+```
 That's it, your data is now available on [APIAnalytics.com](http://www.apianalytics.com)!
 
 ## Usage
