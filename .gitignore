@@ -11,6 +11,7 @@ _build/
 src/_build/
 node_modules/
 test.ml
+test.js
 har_*.ml*
 harchiver
 release/

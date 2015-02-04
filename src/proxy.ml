@@ -8,12 +8,12 @@ exception Too_many_requests
 exception Cant_resolve_ip of string * string
 exception Cant_send_har of string
 
-let make_server port https reverse debug concurrent timeout dev key =
+let make_server port https reverse debug concurrent timeout zmq_host zmq_port key =
 	let nb_current = ref 0 in
-	let sock = Network.get_ZMQ_sock (if dev then Settings.apianalytics_staging else Settings.apianalytics_prod) in
+	let sock = Network.get_ZMQ_sock zmq_host zmq_port in
 	let global_archive = Option.map ~f:(fun k -> (module Archive.Make (struct let key = k end) : Archive.Sig_make)) key in
 
-	let send_har archive req res t_client_length t_provider_length client_ip server_ip (t0, har_send, har_wait) startedDateTime =
+	let send_har archive req req_uri res t_client_length t_provider_length client_ip server_ip (t0, har_send, har_wait) startedDateTime =
 		try_lwt (
 				t_client_length
 			>>= fun client_length ->
@@ -24,6 +24,7 @@ let make_server port https reverse debug concurrent timeout dev key =
 				let open Archive in
 				let archive_input = {
 					req;
+					req_uri;
 					res;
 					req_length = client_length;
 					res_length = provider_length;
@@ -39,13 +40,13 @@ let make_server port https reverse debug concurrent timeout dev key =
 					Lwt_unix.sleep Settings.zmq_flush_timeout >>= fun () -> Lwt.fail (Cant_send_har har_string);
 				]
 			>>= fun () ->
-				if debug then Lwt_io.printlf "%s\n" har_string else return ()
+				if debug then Lwt_io.printlf "SENT\n%s\n" har_string else return ()
 		) with ex ->
 			match ex with
 			| Cant_send_har har ->
-				Lwt_io.printlf "ERROR: Could not flush this datapoint to the ZMQ driver within %f seconds:\n%s\n" Settings.zmq_flush_timeout har
+				Lwt_io.printlf "ERROR Could not flush this datapoint to the ZMQ driver within %f seconds:\n%s\n" Settings.zmq_flush_timeout har
 			| e ->
-				Lwt_io.printlf "ERROR:\n%s\n%s" (Exn.to_string e) (Exn.backtrace ())
+				Lwt_io.printlf "ERROR\n%s\n%s" (Exn.to_string e) (Exn.backtrace ())
 	in
 	let callback (ch, _) req client_body protcol =
 		(* Initiate counters and other bookeeping *)
@@ -73,7 +74,15 @@ let make_server port https reverse debug concurrent timeout dev key =
 			| HTTP -> Uri.with_scheme uri (Some "http")
 		in
 
-		let _ = Lwt_io.printlf "Original: %s\nFixed: %s" (Request.uri req |> Uri.to_string) (Uri.to_string target) in
+		(* Debug output *)
+		let _ = if debug then
+			Lwt_io.printlf "RECEIVED %s\n> host: %s\n> port: %s\n> path: %s\n"
+				(Uri.to_string target)
+				(Uri.host target |> Option.value ~default:"<<no host>>")
+				(Uri.port target |> Option.map ~f:Int.to_string |> Option.value ~default:"<<no port>>")
+				(Uri.path target)
+			else return ()
+		in
 
 		(* Start fetching the target IP in advance *)
 		let target_to_resolve = target |> Uri.host |> Option.value ~default:"" in
@@ -107,7 +116,7 @@ let make_server port https reverse debug concurrent timeout dev key =
 					>>= fun (provider_res, provider_body) ->
 						let har_wait = (Archive.get_timestamp_ms ()) - t0 - har_send in
 						let t_provider_length = Http_utils.body_length provider_body in
-						let _ = send_har archive req provider_res t_client_length t_provider_length client_ip server_ip (t0, har_send, har_wait) startedDateTime in
+						let _ = send_har archive req uri provider_res t_client_length t_provider_length client_ip server_ip (t0, har_send, har_wait) startedDateTime in
 						let provider_headers = Response.headers provider_res in
 
 						(* Keep the same Encoding as the remote server *)
@@ -146,7 +155,7 @@ let make_server port https reverse debug concurrent timeout dev key =
 					t_dns
 					>>= function
 						| Error server_ip | Ok server_ip ->
-							send_har archive req res t_client_length t_provider_length client_ip server_ip (t0, har_send, har_wait) startedDateTime
+							send_har archive req uri res t_client_length t_provider_length client_ip server_ip (t0, har_send, har_wait) startedDateTime
 			in t_res
 		in
 		let _ = response >>= fun _ -> return (nb_current := (!nb_current - 1)) in

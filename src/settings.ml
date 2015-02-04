@@ -1,8 +1,8 @@
-let version = "1.4.2"
+let version = "1.5.0"
 let name = "ApiAnalytics HARchiver"
 
-let apianalytics_prod = "tcp://socket.apianalytics.com:5000"
-let apianalytics_staging = "tcp://server.apianalytics.com:5000"
+let default_zmq_host = "socket.apianalytics.com"
+let default_zmq_port = 5000
 
 let concurrent = 500
 let timeout = 6.

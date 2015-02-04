@@ -36,4 +36,6 @@ let fix_uri uri =
 	match (uri |> Uri.host |> Option.value ~default:"") with
 	| host when String.is_suffix ~suffix:"http" host -> ungarble uri host 4
 	| host when String.is_suffix ~suffix:"https" host -> ungarble uri host 5
+	| host when (((String.length host) / 2) mod 2 = 0) && ((String.slice host (String.length host / 2) 0) = (String.slice host 0 (String.length host / 2))) ->
+			Uri.with_host uri (Some (String.slice host 0 (String.length host / 2)))
 	| _ -> uri

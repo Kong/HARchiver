@@ -2,7 +2,7 @@ open Core.Std
 
 module CLU = Conduit_lwt_unix
 
-val get_ZMQ_sock : string -> [> `Push ] Lwt_zmq.Socket.t
+val get_ZMQ_sock : string -> string -> [> `Push ] Lwt_zmq.Socket.t
 
 val get_addr_from_ch : CLU.flow -> string
 

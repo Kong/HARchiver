@@ -3,6 +3,7 @@ open Har_j
 
 type t_input = {
 	req: Request.t;
+	req_uri: Uri.t; (* Temporary *)
 	res: Response.t;
 	req_length: int;
 	res_length: int;

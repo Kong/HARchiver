@@ -4,6 +4,7 @@ open Har_j
 
 type t_input = {
 	req: Request.t;
+	req_uri: Uri.t;
 	res: Response.t;
 	req_length: int;
 	res_length: int;
@@ -35,12 +36,12 @@ let get_har_content headers size =
 	else
 		None
 
-let get_har_request req req_length =
+let get_har_request req req_uri req_length =
 	let headers = req |> Request.headers in
 	let raw_headers = headers |> Cohttp.Header.to_list in
 	{
 		meth = Cohttp.Code.string_of_method (Request.meth req);
-		url = Uri.to_string (Request.uri req);
+		url = Uri.to_string req_uri;
 		httpVersion = Cohttp.Code.string_of_version (Request.version req);
 		queryString = req |> Request.uri |> Uri.query |> Http_utils.name_value_of_query;
 		headers = raw_headers |> Http_utils.name_value_of_headers;
@@ -68,12 +69,12 @@ let get_har_timings (send, wait, receive) = {
 	receive;
 }
 
-let get_har_entry {req; res; req_length; res_length; client_ip; server_ip; timings=(t1, t2, t3); startedDateTime;} = {
+let get_har_entry {req; req_uri; res; req_length; res_length; client_ip; server_ip; timings=(t1, t2, t3); startedDateTime;} = {
 	serverIPAddress = server_ip;
 	clientIPAddress = client_ip;
 	startedDateTime;
 	time = (t1 + t2 + t3);
-	request = get_har_request req req_length;
+	request = get_har_request req req_uri req_length;
 	response = get_har_reponse res res_length;
 	timings = get_har_timings (t1, t2, t3);
 }

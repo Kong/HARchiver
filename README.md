@@ -66,7 +66,7 @@ Without `OPTIONAL_SERVICE_TOKEN` the HTTP header `Service-Token` must be set on 
 #### Linux
 
 ```bash
-wget https://github.com/Mashape/harchiver/releases/download/v1.4.2/harchiver.tar.gz
+wget https://github.com/Mashape/harchiver/releases/download/v1.5.0/harchiver.tar.gz
 tar xzvf harchiver.tar.gz
 cd release
 ./harchiver
