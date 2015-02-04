@@ -4,7 +4,7 @@ Universal lightweight proxy for apianalytics.com that was made to be portable, f
 
 ## Quick Start
 
-First get your [APIAnalytics.com](http://www.apianalytics.com) service token and [install HARchiver](#install).
+First get your [APIAnalytics.com](http://www.apianalytics.com) service token and [install HARchiver](#installation).
 
 ### For API consumers *(proxy)*
 
