@@ -197,10 +197,16 @@ This project ships with a compiled library of ZeroMQ, more specifically, the lib
 
 *The SSL termination (aka decryption) can be either done in nginx/HAproxy or HARchiver.*
 
+HARchiver uses only 20Mb of RAM and should be located on the same machine as your API Servers to reduce latency and simplify configuration.
+
 <pre><code>
-                     +-----------+     +-----------+     +-----------------+
-+--------------+     | nginx     |     |           |     |                 |
-| The Internet +---->| HAproxy   +---->| HARChiver +---->| Your API Server |
-+--------------+     | ssl       |     |           |     |                 |
-                     +-----------+     +-----------+     +-----------------+
+                                           +-----------+     +--------------------+
+                                     +---->| HARchiver +---->| Your API Server #1 |
+                     +-----------+   |     +-----------+     +--------------------+
++--------------+     | nginx     +---+     +-----------+     +--------------------+
+| The Internet +---->| HAproxy   +-------->| HARchiver +---->| Your API Server #2 |
++--------------+     | ssl       +---+     +-----------+     +--------------------+
+                     +-----------+   |     +-----------+     +--------------------+
+                                     +---->| HARchiver +---->| Your API Server #3 |
+                                           +-----------+     +--------------------+
 <code></pre>
