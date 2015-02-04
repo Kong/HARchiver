@@ -8,14 +8,12 @@ First get your [APIAnalytics.com](http://www.apianalytics.com) service token and
 
 ### For API consumers *(proxy)*
 
+You can use HARchiver as a proxy layer between your application and *any* local or remote API server. *([see network diagram](#proxy))*
+
 Start HARchiver on port 15000 with your API analytics service token:
 
 ```shell
 ./harchiver 15000 SERVICE_TOKEN
-```
-__It looks like this:__
-```
-Your code (Node, Ruby, etc) --> HARchiver --> API
 ```
 
 Now you can send requests through the HARchiver using the `Host` header:
@@ -28,25 +26,20 @@ That's it, your data is now available on [APIAnalytics.com](http://www.apianalyt
 
 ### For API providers *(reverse proxy)*
 
-Start HARchiver on port 15000 in reverse-proxy mode with your API analytics service token:
+To capture *all* incoming traffic to your API *([see network diagram](#reverse-proxy))*, start HARchiver on port 15000 in reverse-proxy mode with your API analytics service token:
 
 ```shell
 ./harchiver 15000 -reverse 10.1.2.3:8080 SERVICE_TOKEN
 ```
 
-In this example, `10.1.2.3:8080` is the location of your API. All incoming requests will be directed there. You can then read the `Host` header in your code to inspect what service the client requested, if necessary.
+In this example, `10.1.2.3:8080` is the location of your API. All incoming requests will be directed there. 
+
+**Note:** if running multiple services per ip, You can inspect the `Host` header in your code to determine what service the client requested, if necessary, or if you wish to limit HARchiver to a specific service / host, use the host name instead of an IP in the previous step.
 
 ```shell
 curl http://127.0.0.1:15000/some/url/on/the/api
 ```
-__It looks like this:__
-```
-Internet --> HARchiver --> Your code (Node, Ruby, etc)
 
-# or if you also want to use nginx/HAproxy:
-# Here the SSL termination (aka decryption) can be either done in nginx/HAproxy or HARchiver.
-Internet --> nginx/HAproxy --> HARchiver --> Your code (Node, Ruby, etc)
-```
 That's it, your data is now available on [APIAnalytics.com](http://www.apianalytics.com)!
 
 ## Usage
@@ -172,3 +165,44 @@ You are now ready to compile the program. Run `make` in the Harchiver directory.
 This product includes software developed by the OpenSSL Project for use in the OpenSSL Toolkit (http://www.openssl.org/).
 
 This project ships with a compiled library of ZeroMQ, more specifically, the libzmq.so.4 file. As required by the LGPL license, you have been made aware that you are free to download and replace it with your own from the [official website](http://zeromq.org/intro:get-the-software).
+
+
+## Network Diagrams
+
+###### Proxy
+
+```
+                                         +-------------+
+                                    +--->| Private API |
+                                    |    +-------------+
+                    +------+----+   |
++-------------+     |           +---+    +-----------------+
+| Application +---->| HARChiver +------->| API Provider #1 |
++-------------+     |           +---+    +-----------------+
+                    +-----------+   |
+                                    |    +-----------------+
+                                    +--->| API Provider #2 |
+                                         +-----------------+
+```
+
+###### Reverse Proxy
+
+```
+                     +------+----+     +-----------------+
++--------------+     |           |     |                 |
+| The Internet +---->| HARChiver +---->| Your API Server |
++--------------+     |           |     |                 |
+                     +-----------+     +-----------------+
+```
+
+###### Reverse Proxy *(with additional proxy layers)*
+
+*Here the SSL termination (aka decryption) can be either done in nginx/HAproxy or HARchiver.*
+
+```
+                     +------+----+     +------+----+     +-----------------+
++--------------+     | nginx     |     |           |     |                 |
+| The Internet +---->| HAproxy   +---->| HARChiver +---->| Your API Server |
++--------------+     | ssl       |     |           |     |                 |
+                     +-----------+     +-----------+     +-----------------+
+```
