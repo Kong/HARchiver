@@ -171,8 +171,7 @@ This project ships with a compiled library of ZeroMQ, more specifically, the lib
 
 ###### Proxy
 
-```
-
+<pre><code>
                                          +-------------+
                                     +--->| Private API |
                     +-----------+   |    +-------------+
@@ -182,26 +181,26 @@ This project ships with a compiled library of ZeroMQ, more specifically, the lib
                     +-----------+   |    +-----------------+
                                     +--->| API Provider #2 |
                                          +-----------------+
-```
+<code></pre>
 
 ###### Reverse Proxy
 
-```
+<pre><code>
                      +-----------+     +-----------------+
 +--------------+     |           |     |                 |
 | The Internet +---->| HARchiver +---->| Your API Server |
 +--------------+     |           |     |                 |
                      +-----------+     +-----------------+
-```
+<code></pre>
 
 ###### Reverse Proxy *(with additional proxy layers)*
 
 *The SSL termination (aka decryption) can be either done in nginx/HAproxy or HARchiver.*
 
-```
+<pre><code>
                      +-----------+     +-----------+     +-----------------+
 +--------------+     | nginx     |     |           |     |                 |
 | The Internet +---->| HAproxy   +---->| HARChiver +---->| Your API Server |
 +--------------+     | ssl       |     |           |     |                 |
                      +-----------+     +-----------+     +-----------------+
-```
+<code></pre>
