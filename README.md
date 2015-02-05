@@ -32,7 +32,7 @@ To capture *all* incoming traffic to your API *([see network diagram](#reverse-p
 ./harchiver 15000 -reverse 10.1.2.3:8080 SERVICE_TOKEN
 ```
 
-In this example, `10.1.2.3:8080` is the location of your API. All incoming requests will be directed there. 
+In this example, `10.1.2.3:8080` is the location of your API. All incoming requests will be directed there.
 
 **Note:** if running multiple services per ip, You can inspect the `Host` header in your code to determine what service the client requested, if necessary, or if you wish to limit HARchiver to a specific service / host, use the host name instead of an IP in the previous step.
 
@@ -54,9 +54,10 @@ harchiver PORT [OPTIONAL_SERVICE_TOKEN]
 
 | Flag              | Description                                                                                          |
 | ----------------- | ---------------------------------------------------------------------------------------------------- |
-| `-c NB`           | maximum number of concurrent requests. *(default: 500)*                                              | 
+| `-c NB`           | maximum number of concurrent requests. *(default: 500)*                                              |
 | `-debug`          | output the generated data on-the-fly                                                                 |
-| `-https PORT`     | add HTTPS support. *The files `key.cert` & `cert.pem` need to be in the same directory as harchiver* |
+| `-https PORT`     | add HTTPS support. *The files `key.cert` & `cert.pem` need to be in the same directory as HARchiver* |
+| `-replays`        | enable replays by sending the body of the requests in the ALF                                        |
 | `-reverse target` | start in reverse-proxy mode                                                                          |
 | `-t TIMEOUT`      | set remote server response timeout. *(default: 6 seconds)*                                           |
 | `-version`        | displays the version number                                                                          |
@@ -79,7 +80,7 @@ If the program reports a GLIBC error on startup, please [open a Github Issue](ht
 If you expect massive load, [up the server's `ulimit`](http://www.cyberciti.biz/faq/linux-increase-the-maximum-number-of-open-files/)
 
 
-### Docker 
+### Docker
 
 #### HTTP only
 

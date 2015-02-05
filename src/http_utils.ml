@@ -23,30 +23,29 @@ let set_x_forwarded_for h client_ip =
 	| Some x -> Cohttp.Header.replace h "X-Forwarded-For" (x^", "^client_ip)
 
 (* Body *)
-let process_body body capture_body =
+let process_body body replays =
 	let clone = body |> Body.to_stream |> Lwt_stream.clone in
-	match capture_body with
+	match replays with
 	| false ->
 		Lwt_stream.fold (fun chunk len ->
 			(String.length chunk) + len
 		) clone 0
 		>>= fun len -> return (len, None)
 	| true ->
+		(* This base64-encodes the body one chunk at a time and concatenates it efficiently *)
 		let buffer = Bigbuffer.create 16 in
-		Lwt_stream.fold (fun chunk len ->
-			Bigbuffer.add_string buffer (B64.encode ~pad:false chunk);
-			(String.length chunk) + len
-		) clone 0
-		>>= fun len ->
-			let b64 = Bigbuffer.contents buffer
-			|> (fun str ->
-				match len mod 4 with
-				| 0 -> str
-				| 1 -> str^"==="
-				| 2 -> str^"=="
-				| 3 -> str^"="
-				| _ -> failwith "Error in body_length padding")
-			in
+		Lwt_stream.fold (fun chunk (len, last4) ->
+			let base64 = B64.encode ~pad:true ((B64.decode last4)^chunk) in
+			match String.length base64 with
+			| 0 -> (len, "")
+			| base64_length ->
+				let new_last4 = String.slice base64 (base64_length - 4) 0 in
+				Bigbuffer.add_substring buffer base64 0 (base64_length - 4);
+				(((String.length chunk) + len), new_last4)
+		) clone (0, "")
+		>>= fun (len, last4) ->
+			Bigbuffer.add_string buffer last4;
+			let b64 = Bigbuffer.contents buffer in
 			return (len, (Some b64))
 
 (* Uri *)

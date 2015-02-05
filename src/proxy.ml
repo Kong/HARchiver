@@ -72,15 +72,17 @@ let make_server port https reverse debug concurrent timeout replays zmq_host zmq
 				| Some p -> Uri.with_port uri p
 				| None -> uri
 		) |> fun uri ->
-			match protcol with
-			| HTTPS -> Uri.with_scheme uri (Some "https")
-			| HTTP -> Uri.with_scheme uri (Some "http")
+			let protocol_header = Cohttp.Header.get client_headers "x-upstream-protocol" |> Option.map ~f:String.lowercase in
+			match (protocol_header, protcol) with
+			| (Some "https", _) | (None, HTTPS) -> Uri.with_scheme uri (Some "https")
+			| (Some "http", _) | (None, HTTP) | (Some _, _) -> Uri.with_scheme uri (Some "http")
 		in
 
 		(* Debug output *)
 		let _ = if debug then
-			Lwt_io.printlf "RECEIVED %s\n> host: %s\n> port: %s\n> path: %s\n"
+			Lwt_io.printlf "RECEIVED %s\n> protocol: %s\n> host: %s\n> port: %s\n> path: %s\n"
 				(Uri.to_string target)
+				(Uri.scheme target |> Option.value ~default:"<<no protocol>>")
 				(Uri.host target |> Option.value ~default:"<<no host>>")
 				(Uri.port target |> Option.map ~f:Int.to_string |> Option.value ~default:"<<no port>>")
 				(Uri.path target)
