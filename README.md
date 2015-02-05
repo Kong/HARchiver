@@ -2,6 +2,8 @@
 
 Universal lightweight proxy for apianalytics.com that was made to be portable, fast and transparent.
 
+We now have a free public HARchiver server available at 104.236.197.123:15000. Make sure to send the `Service-Token` header.
+
 ## Quick Start
 
 First get your [APIAnalytics.com](http://www.apianalytics.com) service token and [install HARchiver](#installation).
