@@ -16,6 +16,8 @@ Start HARchiver on port 15000 with your API analytics service token:
 ./harchiver 15000 SERVICE_TOKEN
 ```
 
+**Note:** By default, requests are proxied on the same protocol they were received. To override that, send the header `X-Upstream-Protocol` with the values HTTP or HTTPS. That makes it possible to query HTTPS-only APIs without enabling HTTPS mode in HARchiver.
+
 Now you can send requests through the HARchiver using the `Host` header:
 
 ```shell
