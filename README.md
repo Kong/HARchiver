@@ -6,6 +6,12 @@ Universal lightweight proxy for apianalytics.com that was made to be portable, f
 
 First get your [APIAnalytics.com](http://www.apianalytics.com) service token and [install HARchiver](#installation).
 
+HARchiver is a proxy, it takes incoming HTTP/HTTPS calls and routes them to their final destination, collecting stats in the background without slowing down the request itself.
+
+**Note:** By default, requests are proxied on the same protocol they were received. To override that, send the header `X-Upstream-Protocol` with the values HTTP or HTTPS. That makes it possible to query HTTPS-only APIs without enabling HTTPS mode in HARchiver.
+
+[See the network diagram](#reverse-proxy)
+
 ### For API Consumers *(proxy)*
 
 You can use HARchiver as a proxy layer between your application and *any* local or remote API server. *([see network diagram](#proxy))*
@@ -15,8 +21,6 @@ Start HARchiver on port 15000 with your API analytics service token:
 ```shell
 ./harchiver 15000 SERVICE_TOKEN
 ```
-
-**Note:** By default, requests are proxied on the same protocol they were received. To override that, send the header `X-Upstream-Protocol` with the values HTTP or HTTPS. That makes it possible to query HTTPS-only APIs without enabling HTTPS mode in HARchiver.
 
 Now you can send requests through the HARchiver using the `Host` header:
 
@@ -28,13 +32,15 @@ That's it, your data is now available on [APIAnalytics.com](http://www.apianalyt
 
 ### For API Creators *(reverse proxy)*
 
-To capture *all* incoming traffic to your API *([see network diagram](#reverse-proxy))*, start HARchiver on port 15000 in reverse-proxy mode with your API analytics service token:
+To capture *all* incoming traffic to your API, start HARchiver on port 15000 in reverse-proxy mode with your API analytics service token:
 
 ```shell
 ./harchiver 15000 -reverse 10.1.2.3:8080 SERVICE_TOKEN
 ```
 
 In this example, `10.1.2.3:8080` is the location of your API. All incoming requests will be directed there.
+
+HARchiver can do SSL termination itself (`-https` option), but if you're already using nginx to do so, you should simply make nginx proxy to HARchiver which proxies to your application. [See the network diagram](#reverse-proxy)
 
 **Note:** if running multiple services per ip, You can inspect the `Host` header in your code to determine what service the client requested, if necessary, or if you wish to limit HARchiver to a specific service / host, use the host name instead of an IP in the previous step.
 
@@ -71,7 +77,6 @@ harchiver PORT [OPTIONAL_SERVICE_TOKEN]
 
 ```shell
 wget https://github.com/Mashape/harchiver/releases/download/v1.5.0/harchiver.tar.gz
-wget https://github.com/Mashape/harchiver/releases/download/v1.4.2/harchiver.tar.gz
 tar xzvf harchiver.tar.gz
 cd release
 ./harchiver
