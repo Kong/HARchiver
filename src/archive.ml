@@ -8,6 +8,8 @@ type t_input = {
 	res: Response.t;
 	req_length: int;
 	res_length: int;
+	req_b64: string option;
+	res_b64: string option;
 	client_ip: string;
 	server_ip: string;
 	timings: int * int * int;
@@ -27,16 +29,19 @@ let get_har_creator = {
 	version = Settings.version;
 }
 
-let get_har_content headers size =
-	if size > 0 then
+let get_har_content headers size b64 =
+	if (size > 0) || (Option.is_some b64)  then
+		let encoding = Option.map ~f:(fun _ -> "base64") b64 in
 		Some {
 			size;
 			mimeType = Cohttp.Header.get headers "content-type" |> Option.value ~default:"application/octet-stream";
+			encoding;
+			text = b64;
 		}
 	else
 		None
 
-let get_har_request req req_uri req_length =
+let get_har_request req req_uri req_length req_b64 =
 	let headers = req |> Request.headers in
 	let raw_headers = headers |> Cohttp.Header.to_list in
 	{
@@ -47,10 +52,10 @@ let get_har_request req req_uri req_length =
 		headers = raw_headers |> Http_utils.name_value_of_headers;
 		headersSize = req |> Request.headers |> Http_utils.length_of_headers;
 		bodySize = req_length;
-		content = get_har_content headers req_length;
+		content = get_har_content headers req_length req_b64;
 	}
 
-let get_har_reponse res res_length =
+let get_har_reponse res res_length res_b64 =
 	let headers = res |> Response.headers in
 	let raw_headers = headers |> Cohttp.Header.to_list in
 	{
@@ -60,7 +65,7 @@ let get_har_reponse res res_length =
 		headers = raw_headers |> Http_utils.name_value_of_headers;
 		headersSize = res |> Response.headers |> Http_utils.length_of_headers;
 		bodySize = res_length;
-		content = get_har_content headers res_length;
+		content = get_har_content headers res_length res_b64;
 	}
 
 let get_har_timings (send, wait, receive) = {
@@ -69,13 +74,13 @@ let get_har_timings (send, wait, receive) = {
 	receive;
 }
 
-let get_har_entry {req; req_uri; res; req_length; res_length; client_ip; server_ip; timings=(t1, t2, t3); startedDateTime;} = {
+let get_har_entry {req; req_uri; res; req_length; res_length; req_b64; res_b64; client_ip; server_ip; timings=(t1, t2, t3); startedDateTime;} = {
 	serverIPAddress = server_ip;
 	clientIPAddress = client_ip;
 	startedDateTime;
 	time = (t1 + t2 + t3);
-	request = get_har_request req req_uri req_length;
-	response = get_har_reponse res res_length;
+	request = get_har_request req req_uri req_length req_b64;
+	response = get_har_reponse res res_length res_b64;
 	timings = get_har_timings (t1, t2, t3);
 }
 

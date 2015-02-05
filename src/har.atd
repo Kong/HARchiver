@@ -36,6 +36,8 @@ type entry = {
 type content = {
 	size: int;
 	mimeType: string;
+	?encoding: string option;
+	?text: string option;
 }
 
 type request = {

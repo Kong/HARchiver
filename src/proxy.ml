@@ -8,17 +8,17 @@ exception Too_many_requests
 exception Cant_resolve_ip of string * string
 exception Cant_send_har of string
 
-let make_server port https reverse debug concurrent timeout zmq_host zmq_port key =
+let make_server port https reverse debug concurrent timeout replays zmq_host zmq_port key =
 	let nb_current = ref 0 in
 	let sock = Network.get_ZMQ_sock zmq_host zmq_port in
 	let global_archive = Option.map ~f:(fun k -> (module Archive.Make (struct let key = k end) : Archive.Sig_make)) key in
 
-	let send_har archive req req_uri res t_client_length t_provider_length client_ip server_ip (t0, har_send, har_wait) startedDateTime =
+	let send_har archive req req_uri res t_client_body t_provider_body client_ip server_ip (t0, har_send, har_wait) startedDateTime =
 		try_lwt (
-				t_client_length
-			>>= fun client_length ->
-				t_provider_length
-			>>= fun provider_length ->
+				t_client_body
+			>>= fun (req_length, req_b64) ->
+				t_provider_body
+			>>= fun (res_length, res_b64) ->
 				let module KeyArchive = (val archive : Archive.Sig_make) in
 
 				let open Archive in
@@ -26,8 +26,10 @@ let make_server port https reverse debug concurrent timeout zmq_host zmq_port ke
 					req;
 					req_uri;
 					res;
-					req_length = client_length;
-					res_length = provider_length;
+					req_length;
+					res_length;
+					req_b64;
+					res_b64;
 					client_ip;
 					server_ip;
 					timings = (har_send, har_wait, ((get_timestamp_ms ()) - t0 - har_wait));
@@ -54,6 +56,7 @@ let make_server port https reverse debug concurrent timeout zmq_host zmq_port ke
 		let t0 = Archive.get_timestamp_ms () in
 		let startedDateTime = Archive.get_utc_time_string () in
 		let client_ip = Network.get_addr_from_ch ch in
+		let client_headers = Request.headers req in
 
 		(* This is necessary for now due to https://github.com/mirage/ocaml-cohttp/issues/248 *)
 		let uri = Request.uri req |> Http_utils.fix_uri in
@@ -89,8 +92,7 @@ let make_server port https reverse debug concurrent timeout zmq_host zmq_port ke
 		let t_dns = Network.dns_lookup target_to_resolve in
 
 		(* More bookeeping *)
-		let client_headers = Request.headers req in
-		let t_client_length = Http_utils.body_length client_body in
+		let t_client_body = Http_utils.process_body client_body replays in
 		let local_archive = Option.map (Cohttp.Header.get client_headers "Service-Token") ~f:(fun k ->
 			(module Archive.Make (struct let key = k end) : Archive.Sig_make)) in
 		let har_send = (Archive.get_timestamp_ms ()) - t0 in
@@ -108,15 +110,15 @@ let make_server port https reverse debug concurrent timeout zmq_host zmq_port ke
 
 				(* Do the remote call using the prefetched cached IP. The whole thing has a Lwt.pick timeout *)
 				let remote_call = (
-					t_dns
+						t_dns
 					>>= function
 						| Error e -> Lwt.fail (Cant_resolve_ip (e, target_to_resolve))
 						| Ok server_ip ->
 							Client.call ~headers:client_headers_ready ~body:client_body (Request.meth req) (Uri.with_host target (Some server_ip))
 					>>= fun (provider_res, provider_body) ->
 						let har_wait = (Archive.get_timestamp_ms ()) - t0 - har_send in
-						let t_provider_length = Http_utils.body_length provider_body in
-						let _ = send_har archive req uri provider_res t_client_length t_provider_length client_ip server_ip (t0, har_send, har_wait) startedDateTime in
+						let t_provider_body = Http_utils.process_body provider_body replays in
+						let _ = send_har archive req uri provider_res t_client_body t_provider_body client_ip server_ip (t0, har_send, har_wait) startedDateTime in
 						let provider_headers = Response.headers provider_res in
 
 						(* Keep the same Encoding as the remote server *)
@@ -148,14 +150,14 @@ let make_server port https reverse debug concurrent timeout zmq_host zmq_port ke
 					Server.respond_error ~status:(Cohttp.Code.status_of_code error_code) ~body:error_text ()
 			in
 			let _ = t_res >>= fun (res, body) ->
-				let t_provider_length = Http_utils.body_length body in
+				let t_provider_body = Http_utils.process_body body replays in
 				match Option.first_some local_archive global_archive with
 				| None -> return ()
 				| Some archive ->
 					t_dns
 					>>= function
 						| Error server_ip | Ok server_ip ->
-							send_har archive req uri res t_client_length t_provider_length client_ip server_ip (t0, har_send, har_wait) startedDateTime
+							send_har archive req uri res t_client_body t_provider_body client_ip server_ip (t0, har_send, har_wait) startedDateTime
 			in t_res
 		in
 		let _ = response >>= fun _ -> return (nb_current := (!nb_current - 1)) in

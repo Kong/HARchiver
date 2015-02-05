@@ -1,5 +1,6 @@
 open Core.Std
 open Har_j
+open Lwt
 
 module Body = Cohttp_lwt_body
 
@@ -22,9 +23,31 @@ let set_x_forwarded_for h client_ip =
 	| Some x -> Cohttp.Header.replace h "X-Forwarded-For" (x^", "^client_ip)
 
 (* Body *)
-let body_length body =
+let process_body body capture_body =
 	let clone = body |> Body.to_stream |> Lwt_stream.clone in
-	Lwt_stream.fold (fun a b -> (String.length a)+b) clone 0
+	match capture_body with
+	| false ->
+		Lwt_stream.fold (fun chunk len ->
+			(String.length chunk) + len
+		) clone 0
+		>>= fun len -> return (len, None)
+	| true ->
+		let buffer = Bigbuffer.create 16 in
+		Lwt_stream.fold (fun chunk len ->
+			Bigbuffer.add_string buffer (B64.encode ~pad:false chunk);
+			(String.length chunk) + len
+		) clone 0
+		>>= fun len ->
+			let b64 = Bigbuffer.contents buffer
+			|> (fun str ->
+				match len mod 4 with
+				| 0 -> str
+				| 1 -> str^"==="
+				| 2 -> str^"=="
+				| 3 -> str^"="
+				| _ -> failwith "Error in body_length padding")
+			in
+			return (len, (Some b64))
 
 (* Uri *)
 let fix_uri uri =
@@ -39,3 +62,4 @@ let fix_uri uri =
 	| host when (((String.length host) / 2) mod 2 = 0) && ((String.slice host (String.length host / 2) 0) = (String.slice host 0 (String.length host / 2))) ->
 			Uri.with_host uri (Some (String.slice host 0 (String.length host / 2)))
 	| _ -> uri
+
