@@ -1,4 +1,4 @@
-let version = "1.5.0"
+let version = "1.6.0"
 let name = "ApiAnalytics HARchiver"
 
 let default_zmq_host = "socket.apianalytics.com"
@@ -12,5 +12,5 @@ let zmq_flush_timeout = 20.
 let http_error_wait = 0.5
 
 let resolver_pool = 10
-let resolver_timeout = 30.
+let resolver_timeout = 10. (* Currently unused *)
 let resolver_expire = 30.
