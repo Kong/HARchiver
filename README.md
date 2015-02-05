@@ -6,7 +6,7 @@ Universal lightweight proxy for apianalytics.com that was made to be portable, f
 
 First get your [APIAnalytics.com](http://www.apianalytics.com) service token and [install HARchiver](#installation).
 
-### For API consumers *(proxy)*
+### For API Consumers *(proxy)*
 
 You can use HARchiver as a proxy layer between your application and *any* local or remote API server. *([see network diagram](#proxy))*
 
@@ -26,7 +26,7 @@ curl -H "Host: httpconsole.com" http://127.0.0.1:15000/echo
 
 That's it, your data is now available on [APIAnalytics.com](http://www.apianalytics.com)!
 
-### For API providers *(reverse proxy)*
+### For API Creators *(reverse proxy)*
 
 To capture *all* incoming traffic to your API *([see network diagram](#reverse-proxy))*, start HARchiver on port 15000 in reverse-proxy mode with your API analytics service token:
 
