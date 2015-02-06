@@ -116,28 +116,19 @@ let make_server port https reverse debug concurrent timeout replays zmq_host zmq
 					>>= function
 						| Error e -> Lwt.fail (Cant_resolve_ip (e, target_to_resolve))
 						| Ok server_ip ->
-							let chunked = Cohttp.Header.get client_headers_ready "transfer-encoding"
-							|> Option.map ~f:(fun x -> String.lowercase x = "chunked")
-							|> Option.value ~default:false
+							let chunked = match Request.encoding req with
+							| Cohttp.Transfer.Fixed _ | Cohttp.Transfer.Unknown -> false
+							| Cohttp.Transfer.Chunked -> true
 							in
 							Client.call ~headers:client_headers_ready ~chunked ~body:client_body (Request.meth req) (Uri.with_host target (Some server_ip))
-					>>= fun (provider_res, provider_body) ->
+					>>= fun (res, provider_body) ->
 						let har_wait = (Archive.get_timestamp_ms ()) - t0 - har_send in
 						let t_provider_body = Http_utils.process_body provider_body replays in
-						let _ = send_har archive req uri provider_res t_client_body t_provider_body client_ip server_ip (t0, har_send, har_wait) startedDateTime in
-						let provider_headers = Response.headers provider_res in
+						let _ = send_har archive req uri res t_client_body t_provider_body client_ip server_ip (t0, har_send, har_wait) startedDateTime in
+						let provider_headers = Response.headers res in
 
-						(* Keep the same Encoding as the remote server *)
-						let encoding = match Cohttp.Header.get provider_headers "transfer-encoding" with
-						| Some transfer when String.lowercase transfer = "chunked" ->
-							Cohttp.Transfer.Chunked
-						| _ ->
-							match Cohttp.Header.get provider_headers "content-length" with
-							| None -> Cohttp.Transfer.Unknown
-							| Some length -> Cohttp.Transfer.Fixed (Int64.of_string (String.strip length))
-						in
 						(* Make the response manually to choose the right Encoding *)
-						let client_response = Response.make ~version:(Response.version provider_res) ~status:(Response.status provider_res) ~encoding ~headers:provider_headers () in
+						let client_response = Response.make ~version:(Response.version res) ~status:(Response.status res) ~encoding:(Response.encoding res) ~headers:provider_headers () in
 						return (client_response, provider_body)
 				)
 				in
@@ -159,8 +150,8 @@ let make_server port https reverse debug concurrent timeout replays zmq_host zmq
 				>>= fun () ->
 					Server.respond_error ~status:(Cohttp.Code.status_of_code error_code) ~body:error_text ()
 			in
-			let _ = t_res >>= fun (res, body) ->
-				let t_provider_body = Http_utils.process_body body replays in
+			let _ = t_res >>= fun (res, provider_body) ->
+				let t_provider_body = Http_utils.process_body provider_body replays in
 				match Option.first_some local_archive global_archive with
 				| None -> return ()
 				| Some archive ->
