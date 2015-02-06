@@ -116,7 +116,11 @@ let make_server port https reverse debug concurrent timeout replays zmq_host zmq
 					>>= function
 						| Error e -> Lwt.fail (Cant_resolve_ip (e, target_to_resolve))
 						| Ok server_ip ->
-							Client.call ~headers:client_headers_ready ~body:client_body (Request.meth req) (Uri.with_host target (Some server_ip))
+							let chunked = Cohttp.Header.get client_headers_ready "transfer-encoding"
+							|> Option.map ~f:(fun x -> String.lowercase x = "chunked")
+							|> Option.value ~default:false
+							in
+							Client.call ~headers:client_headers_ready ~chunked ~body:client_body (Request.meth req) (Uri.with_host target (Some server_ip))
 					>>= fun (provider_res, provider_body) ->
 						let har_wait = (Archive.get_timestamp_ms ()) - t0 - har_send in
 						let t_provider_body = Http_utils.process_body provider_body replays in
@@ -124,9 +128,13 @@ let make_server port https reverse debug concurrent timeout replays zmq_host zmq
 						let provider_headers = Response.headers provider_res in
 
 						(* Keep the same Encoding as the remote server *)
-						let encoding = match Cohttp.Header.get provider_headers "content-length" with
-						| None -> Cohttp.Transfer.Chunked
-						| Some length -> Cohttp.Transfer.Fixed (Int64.of_string length)
+						let encoding = match Cohttp.Header.get provider_headers "transfer-encoding" with
+						| Some transfer when String.lowercase transfer = "chunked" ->
+							Cohttp.Transfer.Chunked
+						| _ ->
+							match Cohttp.Header.get provider_headers "content-length" with
+							| None -> Cohttp.Transfer.Unknown
+							| Some length -> Cohttp.Transfer.Fixed (Int64.of_string (String.strip length))
 						in
 						(* Make the response manually to choose the right Encoding *)
 						let client_response = Response.make ~version:(Response.version provider_res) ~status:(Response.status provider_res) ~encoding ~headers:provider_headers () in

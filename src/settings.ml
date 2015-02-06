@@ -1,4 +1,4 @@
-let version = "1.6.0"
+let version = "1.6.1"
 let name = "ApiAnalytics HARchiver"
 
 let default_zmq_host = "socket.apianalytics.com"
