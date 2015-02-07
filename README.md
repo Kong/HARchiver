@@ -24,13 +24,13 @@ Start HARchiver on port 15000 with your API analytics service token:
 ./harchiver 15000 SERVICE_TOKEN
 ```
 
-Now you can send requests through the HARchiver using the `Host` header:
+Now you can send requests through the HARchiver using the `Host` header, here's an example of making a GET request to `https://httpbin.org/get` through the HARchiver proxy:
 
 ```shell
-curl -H "Host: httpbin.org" http://127.0.0.1:15000/get
+curl -H "Host: httpbin.org" -H "X-Upstream-Protocol: HTTPS" http://127.0.0.1:15000/get
 ```
 
-That called `http://httpbin.org/get` through HARchiver. That's it, your data is now available on [APIAnalytics.com](http://www.apianalytics.com)!
+That's it, your data is now available on [APIAnalytics.com](http://www.apianalytics.com)!
 
 ### For API Creators *(reverse proxy)*
 
