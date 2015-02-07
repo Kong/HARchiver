@@ -12,7 +12,7 @@ HARchiver is a proxy, it takes incoming HTTP/HTTPS calls and routes them to thei
 
 **Note:** By default, requests are proxied on the same protocol they were received. To override that, send the header `X-Upstream-Protocol` with the values HTTP or HTTPS. That makes it possible to query HTTPS-only APIs without enabling HTTPS mode in HARchiver.
 
-[See the network diagram](#reverse-proxy)
+[See the network diagrams](#network-diagrams)
 
 ### For API Consumers *(proxy)*
 
