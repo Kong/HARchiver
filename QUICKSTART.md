@@ -2,12 +2,12 @@ API Analytics offers a free cloud proxy to quickly get data into our system. Our
 
 ### Cloud Proxy
 
-The public proxy is available at `104.236.197.123:15000`. Don't forget to set the required `Host` and `Service-Token` headers. The optional `X-Upstream-Protocol` Header can be set to `HTTP` or `HTTPS` which will override the protocol when connecting upstream.
+The public proxy is available at `proxy.apianalytics.com:15000` for HTTP and `proxy.apianalytics.com:15001` for HTTPS. Don't forget to set the required `Host` and `Service-Token` headers. The optional `X-Upstream-Protocol` Header can be set to `HTTP` or `HTTPS` which will override the protocol when connecting upstream.
 
 Here is an example of making request through the cloud proxy:
 
 ```bash
-curl -H "Host: httpbin.org" -H "Service-Token: SERVICE_TOKEN" http://104.236.197.123:15000/get
+curl -H "Host: httpbin.org" -H "Service-Token: SERVICE_TOKEN" http://proxy.apianalytics.com:15000/get
 ```
 
 ### On-Premise
