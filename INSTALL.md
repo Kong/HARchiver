@@ -1,5 +1,7 @@
 *Not recommended for the faint of heart!*
 
+Check out the README for install instructions without having to build it manually.
+
 ### 1- Acquire OPAM
 
 Check if your Linux distribution offers OPAM 1.2 in `yum` or `apt-get`. If it does, install it and go to step 2. Otherwise, check if your distribution offers OCaml 4. If it does, install it and go to Step 1.2, if it doesn't, go to Step 1.1.

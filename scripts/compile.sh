@@ -13,7 +13,8 @@ ocamlfind ocamlc -c har_t.ml -package atdgen
 ocamlfind ocamlc -c har_j.ml -package atdgen
 
 
-ocamlfind ocamlc -c settings.ml
+ocamlfind ocamlc -c settings.mli -thread -package core,cohttp.lwt
+ocamlfind ocamlc -c settings.ml -thread -package core,cohttp.lwt
 
 ocamlfind ocamlc -c http_utils.mli -package cohttp.lwt
 ocamlfind ocamlc -c http_utils.ml -thread -package core,cohttp.lwt
@@ -30,6 +31,7 @@ ocamlfind ocamlc -c network.ml -thread -package core,cohttp.lwt,lwt-zmq,dns
 ocamlfind ocamlc -c proxy.mli -package lwt
 ocamlfind ocamlc -c proxy.ml -thread -package core,lwt.syntax,cohttp.lwt,lwt-zmq -syntax camlp4o
 
+ocamlfind ocamlc -c main.ml -thread -package core,lwt
 
 mv *.cm* ..
 rm har_*.ml*

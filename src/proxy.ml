@@ -2,16 +2,17 @@ open Core.Std
 open Lwt
 open Cohttp_lwt_unix
 open Har_j
+open Settings
 
 type protocol = HTTP | HTTPS
 exception Too_many_requests
 exception Cant_resolve_ip of string * string
 exception Cant_send_har of string
 
-let make_server port https reverse debug concurrent timeout replays zmq_host zmq_port key =
+let make_server config =
 	let nb_current = ref 0 in
-	let sock = Network.get_ZMQ_sock zmq_host zmq_port in
-	let global_archive = Option.map ~f:(fun k -> (module Archive.Make (struct let key = k end) : Archive.Sig_make)) key in
+	let sock = Network.get_ZMQ_sock config.zmq_host config.zmq_port in
+	let global_archive = Option.map ~f:(fun k -> (module Archive.Make (struct let key = k end) : Archive.Sig_make)) config.key in
 
 	let send_har archive req req_uri res t_client_body t_provider_body client_ip server_ip (t0, har_send, har_wait) startedDateTime =
 		try_lwt (
@@ -42,7 +43,7 @@ let make_server port https reverse debug concurrent timeout replays zmq_host zmq
 					Lwt_unix.sleep Settings.zmq_flush_timeout >>= fun () -> Lwt.fail (Cant_send_har har_string);
 				]
 			>>= fun () ->
-				if debug then Lwt_io.printlf "SENT\n%s\n" har_string else return ()
+				if config.debug then Lwt_io.printlf "SENT\n%s\n" har_string else return ()
 		) with ex ->
 			match ex with
 			| Cant_send_har har ->
@@ -62,7 +63,7 @@ let make_server port https reverse debug concurrent timeout replays zmq_host zmq
 		let uri = Request.uri req |> Http_utils.fix_uri in
 
 		(* Prepare the target *)
-		let target = (match reverse with
+		let target = (match config.reverse with
 		| None -> uri
 		| Some (reverse_host, reverse_port) ->
 			uri
@@ -79,7 +80,7 @@ let make_server port https reverse debug concurrent timeout replays zmq_host zmq
 		in
 
 		(* Debug output *)
-		let _ = if debug then
+		let _ = if config.debug then
 			Lwt_io.printlf "RECEIVED %s\n> protocol: %s\n> host: %s\n> port: %s\n> path: %s\n"
 				(Uri.to_string target)
 				(Uri.scheme target |> Option.value ~default:"<<no protocol>>")
@@ -94,7 +95,7 @@ let make_server port https reverse debug concurrent timeout replays zmq_host zmq
 		let t_dns = Network.dns_lookup target_to_resolve in
 
 		(* More bookeeping *)
-		let t_client_body = Http_utils.process_body client_body replays in
+		let t_client_body = Http_utils.process_body client_body config.replays in
 		let local_archive = Option.map (Cohttp.Header.get client_headers "Service-Token") ~f:(fun k ->
 			(module Archive.Make (struct let key = k end) : Archive.Sig_make)) in
 		let har_send = (Archive.get_timestamp_ms ()) - t0 in
@@ -102,7 +103,7 @@ let make_server port https reverse debug concurrent timeout replays zmq_host zmq
 		(* Main block. Throws lwt exceptions for any invalid request or error *)
 		let response = try_lwt (
 			(* Throw some exceptions if needed, then set some headers *)
-			if !nb_current > concurrent then Lwt.fail Too_many_requests else
+			if !nb_current > config.concurrent then Lwt.fail Too_many_requests else
 			match Option.first_some local_archive global_archive with
 			| None -> Lwt.fail (Failure "Service-Token header missing")
 			| Some archive ->
@@ -123,7 +124,7 @@ let make_server port https reverse debug concurrent timeout replays zmq_host zmq
 							Client.call ~headers:client_headers_ready ~chunked ~body:client_body (Request.meth req) (Uri.with_host target (Some server_ip))
 					>>= fun (res, provider_body) ->
 						let har_wait = (Archive.get_timestamp_ms ()) - t0 - har_send in
-						let t_provider_body = Http_utils.process_body provider_body replays in
+						let t_provider_body = Http_utils.process_body provider_body config.replays in
 						let _ = send_har archive req uri res t_client_body t_provider_body client_ip server_ip (t0, har_send, har_wait) startedDateTime in
 						let provider_headers = Response.headers res in
 
@@ -132,7 +133,7 @@ let make_server port https reverse debug concurrent timeout replays zmq_host zmq
 						return (client_response, provider_body)
 				)
 				in
-				Lwt.pick [remote_call; Lwt_unix.timeout timeout]
+				Lwt.pick [remote_call; Lwt_unix.timeout config.timeout]
 		) with ex ->
 			let (error_code, error_text) = match ex with
 			| Lwt_unix.Timeout ->
@@ -151,7 +152,7 @@ let make_server port https reverse debug concurrent timeout replays zmq_host zmq
 					Server.respond_error ~status:(Cohttp.Code.status_of_code error_code) ~body:error_text ()
 			in
 			let _ = t_res >>= fun (res, provider_body) ->
-				let t_provider_body = Http_utils.process_body provider_body replays in
+				let t_provider_body = Http_utils.process_body provider_body config.replays in
 				match Option.first_some local_archive global_archive with
 				| None -> return ()
 				| Some archive ->
@@ -168,10 +169,10 @@ let make_server port https reverse debug concurrent timeout replays zmq_host zmq
 	let config_tcp = Server.make ~callback:(fun c r b -> callback c r b HTTP) ~conn_closed () in
 	let config_ssl = Server.make ~callback:(fun c r b -> callback c r b HTTPS) ~conn_closed () in
 	let ctx = Cohttp_lwt_unix_net.init () in
-	let tcp_mode = `TCP (`Port port) in
+	let tcp_mode = `TCP (`Port config.port) in
 	let tcp_server = Server.create ~ctx ~mode:tcp_mode config_tcp in
-	let _ = Lwt_io.printf "HTTP server listening on port %n\n" port in
-	match https with
+	let _ = Lwt_io.printf "HTTP server listening on port %n\n" config.port in
+	match config.https with
 	| None ->
 		tcp_server
 	| Some https_port ->
