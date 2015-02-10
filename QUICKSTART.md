@@ -1,4 +1,4 @@
-API Analytics offers a free cloud proxy to quickly get data into our system. Our cloud proxy is running the same open-source proxy that you can [install on your own servers](https://github.com/Mashape/HARchiver) for added security and performance. 
+API Analytics offers a free cloud proxy to quickly get data into our system. Our cloud proxy is running the same open-source proxy that you can [install on your own servers](https://github.com/Mashape/HARchiver) for added security and performance.
 
 ### Cloud Proxy
 
@@ -9,6 +9,8 @@ Here is an example of making request through the cloud proxy:
 ```bash
 curl -H "Host: httpbin.org" -H "Service-Token: SERVICE_TOKEN" http://proxy.apianalytics.com:15000/get
 ```
+
+**Note:** In-browser tools such as Postman do not let you override the `Host` header because they rely on XMLHttpRequest.
 
 ### On-Premise
 

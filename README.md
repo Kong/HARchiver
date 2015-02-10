@@ -2,13 +2,11 @@
 
 Universal lightweight proxy for apianalytics.com that was made to be portable, fast and transparent.
 
+HARchiver is a proxy, it takes incoming HTTP/HTTPS calls and routes them to their final destination, collecting stats in the background without slowing down the request itself.
+
 We now have a free public HARchiver server available at `proxy.apianalytics.com:15000` for HTTP and port `15001` for HTTPS. Make sure to send the `Service-Token` header.
 
-## Quick Start
-
 First get your [APIAnalytics.com](http://www.apianalytics.com) service token and [install HARchiver](#installation).
-
-HARchiver is a proxy, it takes incoming HTTP/HTTPS calls and routes them to their final destination, collecting stats in the background without slowing down the request itself.
 
 **Note:** By default, requests are proxied on the same protocol they were received. To override that, send the header `X-Upstream-Protocol` with the values HTTP or HTTPS. That makes it possible to query HTTPS-only APIs without enabling HTTPS mode in HARchiver.
 
