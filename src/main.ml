@@ -21,11 +21,12 @@ let command =
 			+> flag "c" (optional int) ~doc:(" Set a maximum number of concurrent requests. This is "^(Int.to_string Settings.default_concurrent)^" by default. Beyond that, make sure your ulimit is high enough.")
 			+> flag "t" (optional float) ~doc:(" Timeout, in seconds. Close the connection if the remote server doesn't respond before the timeout expires. This is "^(Float.to_string Settings.default_timeout)^" seconds by default.")
 			+> flag "replays" no_arg ~doc:" Enable replays by sending the body of the requests in the ALF"
+			+> flag "filter-ua" (optional string) ~doc:" Do not send datapoints for the calls containing a User-Agent header that matches this case-insensitive PCRE regular expression."
 			+> flag "host" (optional string) ~doc:" (Dev option). Overrides the APIAnalytics host"
 			+> flag "port" (optional int) ~doc:" (Dev option). Overrides the APIAnalytics port"
 			+> anon (maybe ("service_token" %: string))
 		)
-		(fun port https reverse debug concurrent timeout replays zmq_host zmq_port key () ->
-			Settings.make_config port https reverse debug concurrent timeout replays zmq_host zmq_port key |> start)
+		(fun port https reverse debug concurrent timeout replays filter_ua zmq_host zmq_port key () ->
+			Settings.make_config port https reverse debug concurrent timeout replays filter_ua zmq_host zmq_port key |> start)
 
 let () = Command.run ~version:Settings.version ~build_info:"github.com/Mashape/HARchiver" command

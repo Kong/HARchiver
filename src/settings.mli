@@ -18,9 +18,10 @@ type config = {
 	concurrent : int;
 	timeout : float;
 	replays : bool;
+	filter_ua: Re.re option;
 	zmq_host : string;
 	zmq_port : string;
 	key : string option;
 }
 
-val make_config : int -> int option -> string option -> bool -> int option -> float option -> bool -> string option -> int option -> string option -> config
+val make_config : int -> int option -> string option -> bool -> int option -> float option -> bool -> string option -> string option -> int option -> string option -> config

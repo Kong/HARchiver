@@ -1,6 +1,6 @@
 open Core.Std
 
-let version = "1.6.1"
+let version = "1.6.1-ua"
 let name = "ApiAnalytics HARchiver"
 
 let zmq_flush_timeout = 20.
@@ -26,12 +26,13 @@ type config = {
 	concurrent: int;
 	timeout: float;
 	replays: bool;
+	filter_ua: Re.re option;
 	zmq_host: string;
 	zmq_port: string;
 	key: string option
 }
 
-let make_config port https reverse debug concurrent timeout replays zmq_host zmq_port key = {
+let make_config port https reverse debug concurrent timeout replays filter_ua zmq_host zmq_port key = {
 	port;
 	https;
 	reverse = reverse
@@ -46,6 +47,7 @@ let make_config port https reverse debug concurrent timeout replays zmq_host zmq
 	concurrent = concurrent |> Option.value ~default:default_concurrent;
 	timeout = timeout |> Option.value ~default:default_timeout;
 	replays;
+	filter_ua = Option.map ~f:Regex.create filter_ua;
 	zmq_host = zmq_host |> Option.value ~default:default_zmq_host;
 	zmq_port = zmq_port |> Option.value ~default:default_zmq_port |> Int.to_string;
 	key;

@@ -12,6 +12,8 @@ ocamlfind ocamlc -c har_j.mli -package atdgen
 ocamlfind ocamlc -c har_t.ml -package atdgen
 ocamlfind ocamlc -c har_j.ml -package atdgen
 
+ocamlfind ocamlc -c regex.mli -package re.pcre
+ocamlfind ocamlc -c regex.ml -thread -package core,re.pcre
 
 ocamlfind ocamlc -c settings.mli -thread -package core,cohttp.lwt
 ocamlfind ocamlc -c settings.ml -thread -package core,cohttp.lwt

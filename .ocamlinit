@@ -23,6 +23,9 @@ module Body = Cohttp_lwt_body
 #load "har_j.cmo"
 open Har_j
 
+#require "re.pcre"
+
+#load "regex.cmo"
 #load "settings.cmo"
 #load "http_utils.cmo"
 #load "cache.cmo"

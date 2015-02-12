@@ -17,6 +17,7 @@ corebuild \
 	-pkg atd \
 	-pkg atdgen \
 	-pkg ZMQ \
+	-pkg re.pcre \
 	main.native
 
 cp main.native ../harchiver

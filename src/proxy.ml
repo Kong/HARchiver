@@ -15,7 +15,7 @@ let make_server config =
 	let global_archive = Option.map ~f:(fun k -> (module Archive.Make (struct let key = k end) : Archive.Sig_make)) config.key in
 
 	let send_har archive req req_uri res t_client_body t_provider_body client_ip server_ip (t0, har_send, har_wait) startedDateTime =
-		try_lwt (
+		let send () = try_lwt (
 				t_client_body
 			>>= fun (req_length, req_b64) ->
 				t_provider_body
@@ -50,6 +50,11 @@ let make_server config =
 				Lwt_io.printlf "ERROR Could not flush this datapoint to the ZMQ driver within %f seconds:\n%s\n" Settings.zmq_flush_timeout har
 			| e ->
 				Lwt_io.printlf "ERROR\n%s\n%s" (Exn.to_string e) (Exn.backtrace ())
+		in
+		match config.filter_ua with
+		| None -> send ()
+		| Some filter when Cohttp.Header.get (Request.headers req) "user-agent" |> Option.value ~default:"" |> Regex.matches filter |> not -> send ()
+		| Some _ -> return ()
 	in
 	let callback (ch, _) req client_body protcol =
 		(* Initiate counters and other bookeeping *)
