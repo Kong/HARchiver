@@ -2,7 +2,11 @@ open Core.Std
 open Lwt
 open Settings
 
+(* Force usage of libev *)
 let () = Lwt_engine.set ~transfer:true ~destroy:true (new Lwt_engine.libev)
+
+(* Replace the default uncaught exception hook with one that doesn't quit *)
+let () = Lwt.async_exception_hook := fun ex -> print_endline (Exn.to_string ex)
 
 let start config = Lwt_unix.run (Proxy.make_server config)
 
