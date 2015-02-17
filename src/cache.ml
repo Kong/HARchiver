@@ -57,15 +57,14 @@ let get c ~key ~exp ~thunk =
 			waiting = [];
 		}
 		in
-		let _ = Hashtbl.add c ~key ~data:new_cached in
+		ignore (Hashtbl.add c ~key ~data:new_cached);
 		thunk ()
 		>>= fun res ->
 			(* There's a response, remove the expiration thread and wake every thread up *)
 			Lwt.cancel new_cached.t_expire;
 			List.iter ~f:(fun w ->
 				try Lwt.wakeup w res with ex ->
-				let _ = Lwt_io.printlf "Race condition: thread is already awake, this shouldn't happen: %s" (Exn.to_string ex) in
-				()
+				ignore_result (Lwt_io.printlf "Race condition: thread is already awake, this shouldn't happen: %s" (Exn.to_string ex));
 			) new_cached.waiting;
 			let () = match res with
 			| Ok v ->

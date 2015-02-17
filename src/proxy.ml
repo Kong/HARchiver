@@ -86,15 +86,14 @@ let make_server config =
 			in
 
 			(* Debug output *)
-			let _ = if config.debug then
+			ignore_result (if config.debug then
 				Lwt_io.printlf "RECEIVED %s\n> protocol: %s\n> host: %s\n> port: %s\n> path: %s\n"
 					(Uri.to_string target)
 					(Uri.scheme target |> Option.value ~default:"<<no protocol>>")
 					(Uri.host target |> Option.value ~default:"<<no host>>")
 					(Uri.port target |> Option.map ~f:Int.to_string |> Option.value ~default:"<<no port>>")
 					(Uri.path target)
-				else return ()
-			in
+				else return ());
 
 			(* Start fetching the target IP in advance *)
 			let target_to_resolve = target |> Uri.host |> Option.value ~default:"" in
@@ -131,7 +130,7 @@ let make_server config =
 						>>= fun (res, provider_body) ->
 							let har_wait = (Archive.get_timestamp_ms ()) - t0 - har_send in
 							let t_provider_body = Http_utils.process_body provider_body config.replays in
-							let _ = send_har archive req uri res t_client_body t_provider_body client_ip server_ip (t0, har_send, har_wait) startedDateTime in
+							ignore_result (send_har archive req uri res t_client_body t_provider_body client_ip server_ip (t0, har_send, har_wait) startedDateTime);
 							let provider_headers = Response.headers res in
 
 							(* Make the response manually to choose the right Encoding *)
@@ -157,7 +156,7 @@ let make_server config =
 					>>= fun () ->
 						Server.respond_error ~status:(Cohttp.Code.status_of_code error_code) ~body:error_text ()
 				in
-				let _ = t_res >>= fun (res, provider_body) ->
+				ignore_result (t_res >>= fun (res, provider_body) ->
 					let t_provider_body = Http_utils.process_body provider_body config.replays in
 					match Option.first_some local_archive global_archive with
 					| None -> return ()
@@ -166,14 +165,15 @@ let make_server config =
 						>>= function
 							| Error server_ip | Ok server_ip ->
 								send_har archive req uri res t_client_body t_provider_body client_ip server_ip (t0, har_send, har_wait) startedDateTime
-				in t_res
+				);
+				t_res
 			in
-			let _ = response >>= fun _ -> return (nb_current := (!nb_current - 1)) in
+			ignore (response >>= fun _ -> return (nb_current := (!nb_current - 1)));
 			response
 		) with ex ->
 			(* Something bad happened, this request is lost. *)
 			let error_text = Exn.to_string ex in
-			let _ = Lwt_io.printlf "Something bad happened, this request cannot be saved: %s\nError: %s\n" (Request.uri req |> Uri.to_string) error_text in
+			ignore_result (Lwt_io.printlf "Something bad happened, this request cannot be saved: %s\nError: %s\n" (Request.uri req |> Uri.to_string) error_text);
 			Server.respond_error ~status:(Cohttp.Code.status_of_code 500) ~body:error_text ()
 	in
 	let conn_closed (_, _) = () in
@@ -182,7 +182,7 @@ let make_server config =
 	let ctx = Cohttp_lwt_unix_net.init () in
 	let tcp_mode = `TCP (`Port config.port) in
 	let tcp_server = Server.create ~ctx ~mode:tcp_mode config_tcp in
-	let _ = Lwt_io.printf "HTTP server listening on port %n\n" config.port in
+	ignore (Lwt_io.printf "HTTP server listening on port %n\n" config.port);
 	match config.https with
 	| None ->
 		tcp_server
@@ -191,8 +191,8 @@ let make_server config =
 		let start_https_thunk () = Server.create ~ctx ~mode:ssl_mode config_ssl in
 		match Result.try_with start_https_thunk with
 		| Ok ssl_server ->
-			let _ = Lwt_io.printf "HTTPS server listening on port %n\n" https_port in
+			ignore (Lwt_io.printf "HTTPS server listening on port %n\n" https_port);
 			(tcp_server <&> ssl_server)
 		| Error e ->
-			let _ = Lwt_io.printf "An HTTPS error occured. Make sure both cert.pem and key.pem are located in the current harchiver directory\n%s\nOnly HTTP mode was started\n\n" (Exn.to_string e) in
+			ignore (Lwt_io.printf "An HTTPS error occured. Make sure both cert.pem and key.pem are located in the current harchiver directory\n%s\nOnly HTTP mode was started\n\n" (Exn.to_string e));
 			tcp_server
