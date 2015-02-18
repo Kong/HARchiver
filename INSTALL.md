@@ -24,7 +24,7 @@ Go to http://zeromq.org/intro:get-the-software and download the latest 4.0.x rel
 
 ### 4- Install the dependencies for HARchiver.
 
-`apt-get install libssl-dev zlib1g-dev libev-dev` (or `yum`).
+`apt-get install libssl-dev zlib1g-dev libev-dev aspcud` (or the equivalent packes in `yum`).
 
 Run `opam install core lwt conf-libev ssl cohttp lwt-zmq atdgen dns re utop`. If it fails, try reinstalling ZMQ and make sure that you followed all the instructions carefully and have all the dependencies listed on the ZMQ page, then try again.
 
