@@ -76,7 +76,7 @@ harchiver PORT [OPTIONAL_SERVICE_TOKEN]
 ### Linux *(For OSX and Windows use [Docker](#docker))*
 
 ```shell
-wget https://github.com/Mashape/harchiver/releases/download/v1.6.2/harchiver.tar.gz
+wget https://github.com/Mashape/harchiver/releases/download/v1.6.3/harchiver.tar.gz
 tar xzvf harchiver.tar.gz
 cd release
 ./harchiver

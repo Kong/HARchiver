@@ -64,7 +64,7 @@ let get c ~key ~exp ~thunk =
 			Lwt.cancel new_cached.t_expire;
 			List.iter ~f:(fun w ->
 				try Lwt.wakeup w res with ex ->
-				ignore_result (Lwt_io.printlf "Race condition: thread is already awake, this shouldn't happen: %s" (Exn.to_string ex));
+					ignore_result (Lwt_io.printlf "Race condition: thread is already awake, this shouldn't happen: %s" (Exn.to_string ex));
 			) new_cached.waiting;
 			let () = match res with
 			| Ok v ->

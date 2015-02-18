@@ -1,6 +1,6 @@
 open Core.Std
 
-let version = "1.6.2b"
+let version = "1.6.3"
 let name = "ApiAnalytics HARchiver"
 
 let zmq_flush_timeout = 20.
