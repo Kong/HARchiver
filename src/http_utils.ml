@@ -20,7 +20,7 @@ let length_of_headers raw_headers =
 let set_x_forwarded_for h client_ip =
 	match Cohttp.Header.get h "X-Forwarded-For" with
 	| None -> Cohttp.Header.add h "X-Forwarded-For" client_ip
-	| Some x -> Cohttp.Header.replace h "X-Forwarded-For" (x^", "^client_ip)
+	| Some x -> Cohttp.Header.replace h "X-Forwarded-For" (x ^ ", " ^ client_ip)
 
 (* Body *)
 let process_body body replays =
@@ -35,7 +35,7 @@ let process_body body replays =
 		(* This base64-encodes the body one chunk at a time and concatenates it efficiently *)
 		let buffer = Bigbuffer.create 16 in
 		Lwt_stream.fold (fun chunk (len, last4) ->
-			let base64 = B64.encode ~pad:true ((B64.decode last4)^chunk) in
+			let base64 = B64.encode ~pad:true (B64.decode last4) ^ chunk in
 			match String.length base64 with
 			| 0 -> (len, "")
 			| base64_length ->

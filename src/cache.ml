@@ -39,7 +39,7 @@ currently doing it, or wait for the result of that other thread and return it.
 Call `get` inside Lwt.pick with a timeout if there's a chance the thunk might never return. *)
 let get c ~key ~exp ~thunk =
 	match Hashtbl.find c key with
-	| Some found -> (
+	| Some found -> begin
 		match found.element with
 		| Some el ->
 			(* There's something *)
@@ -47,8 +47,8 @@ let get c ~key ~exp ~thunk =
 		| None ->
 			(* Currently being fetched *)
 			let (thread, wakener) = Lwt.wait () in
-			let () = found.waiting <- (wakener::found.waiting) in
-			thread)
+			found.waiting <- (wakener::found.waiting);
+			thread end
 	| None ->
 		(* Go get it yourself *)
 		let new_cached = {
@@ -60,16 +60,16 @@ let get c ~key ~exp ~thunk =
 		ignore (Hashtbl.add c ~key ~data:new_cached);
 		thunk ()
 		>>= fun res ->
-			(* There's a response, remove the expiration thread and wake every thread up *)
+			(* There's a response, remove the expiration thread, store the response and wake every thread up *)
 			Lwt.cancel new_cached.t_expire;
-			List.iter ~f:(fun w ->
-				try Lwt.wakeup w res with ex ->
-					ignore_result (Lwt_io.printlf "Race condition: thread is already awake, this shouldn't happen: %s" (Exn.to_string ex));
-			) new_cached.waiting;
 			let () = match res with
 			| Ok v ->
 				put c key v exp
 			| Error _ ->
 				Hashtbl.remove c key
 			in
+			List.iter ~f:(fun w ->
+				try Lwt.wakeup w res with ex ->
+					ignore_result (Lwt_io.printlf "Race condition: thread is already awake, this shouldn't happen: %s" (Exn.to_string ex));
+			) new_cached.waiting;
 			return res
