@@ -18,17 +18,27 @@ Check if your Linux distribution offers OPAM 1.2 in `yum` or `apt-get`. If it do
 
 This is necessary for some of the dependencies. Run `opam init`, then `opam switch 4.02.1`.
 
-### 3- Install ZMQ
+### 3- Install the system dependencies for HARchiver and ZMQ.
 
-Go to http://zeromq.org/intro:get-the-software and download the latest 4.0.x release POSIX tarball. Then scroll and follow the instructions in the `To build on UNIX-like systems` section.
-
-### 4- Install the dependencies for HARchiver.
+For HARchiver:
 
 `apt-get install libssl-dev zlib1g-dev libev-dev aspcud` (or the equivalent packages in `yum`).
 
-Run `opam install core lwt conf-libev ssl cohttp lwt-zmq atdgen dns re utop`. If it fails, try reinstalling ZMQ and make sure that you followed all the instructions carefully and have all the dependencies listed on the ZMQ page, then try again.
+For ZMQ:
 
-### 5- Build it
+`sudo apt-get install libtool pkg-config build-essential autoconf automake uuid-dev uuid e2fsprogs`
+
+### 4- Install ZMQ
+
+Go to http://zeromq.org/intro:get-the-software and download the latest 4.0.x release POSIX tarball. Then scroll and follow the instructions in the `To build on UNIX-like systems` section.
+
+### 5- Install the OPAM dependencies for HARchiver:
+
+`opam install core lwt conf-libev ssl cohttp lwt-zmq atdgen dns re utop`.
+
+If it fails, try reinstalling ZMQ and make sure that you followed all the instructions carefully and have all the dependencies listed on the ZMQ page, then try again.
+
+### 6- Build it
 
 You are now ready to compile the program. Run `make` in the Harchiver directory. If everything went fine until this point you'll see a `harchiver` file in the directory. Congrats!
 
