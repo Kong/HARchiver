@@ -12,7 +12,6 @@ exception Cant_send_har of string
 
 let make_server config =
 	let nb_current = ref 0 in
-	let sock = Network.get_zmq_sock config.zmq_host config.zmq_port in
 	let global_archive = Option.map ~f:(fun k -> (module Archive.Make (struct let key = k end) : Archive.Sig_make)) config.key in
 
 	let send_har archive req req_uri res t_client_body t_provider_body client_ip server_ip (t0, har_send, har_wait) startedDateTime =
@@ -38,9 +37,10 @@ let make_server config =
 					startedDateTime;
 				} in
 
-				let (p_str, sent_async) = Network.send_zmq sock (fun () -> KeyArchive.get_message archive_input |> string_of_message) in
+				let p_str = allocate string (KeyArchive.get_message archive_input |> string_of_message) in
+				let zmq_async = Network.send_zmq p_str in
 				Lwt.pick [
-					sent_async;
+					zmq_async;
 					Lwt_unix.sleep Settings.zmq_flush_timeout >>= fun () -> Lwt.fail (Cant_send_har !@p_str);
 				]
 			>>= fun () ->

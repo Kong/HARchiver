@@ -16,9 +16,9 @@ void* get_sock(void* context, char* addr) {
 }
 
 void send_msg(void* requester, char** str, int len) {
-	// caml_release_runtime_system();
+	caml_release_runtime_system();
 
 	assert(zmq_send(requester, *str, len, 0) == len);
 
-	// caml_acquire_runtime_system();
+	caml_acquire_runtime_system();
 }

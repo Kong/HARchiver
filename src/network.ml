@@ -19,17 +19,23 @@ let send_msg = foreign "send_msg" (zmq_sock @-> str_ptr @-> int @-> returning vo
 
 module CLU = Conduit_lwt_unix
 
+let ctx = get_context ()
+
 let get_zmq_sock zmq_host zmq_port =
 	let remote = "tcp://"^zmq_host^":"^zmq_port in
-	let ctx = get_context () in
 	print_endline ("Connecting to "^remote^" ...");
 	let sock = get_sock ctx remote in
 	print_endline "Connected.";
-	sock
+	Lwt.return sock
 
-let send_zmq sock thunk =
-	let p_str = allocate string (thunk ()) in
-	(p_str, (return (send_msg sock p_str (String.length !@p_str))))
+let sockets = Lwt_pool.create 500 ~check:(fun _ f -> f false) (fun () -> get_zmq_sock "socket.apianalytics.com" "5000")
+
+let detached_send_msg sock msg len = Lwt_preemptive.detach (send_msg sock msg) len
+
+let send_zmq p_str =
+	Lwt_pool.use sockets (fun sock ->
+		detached_send_msg sock p_str (String.length !@p_str)
+	)
 
 let get_addr_from_ch = function
 | CLU.TCP {CLU.fd; ip; port} -> begin
