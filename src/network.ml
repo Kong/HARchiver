@@ -1,17 +1,35 @@
 open Core.Std
 open Lwt
+open Ctypes
+open PosixTypes
+open Foreign
+
+type zmq_ctx = unit ptr
+let zmq_ctx : zmq_ctx typ = ptr void
+
+type zmq_sock = unit ptr
+let zmq_sock : zmq_sock typ = ptr void
+
+type str_ptr = string ptr
+let str_ptr : str_ptr typ = ptr string
+
+let get_context = foreign "get_context" (void @-> returning zmq_ctx)
+let get_sock = foreign "get_sock" (zmq_ctx @-> string @-> returning zmq_sock)
+let send_msg = foreign "send_msg" (zmq_sock @-> str_ptr @-> int @-> returning void)
 
 module CLU = Conduit_lwt_unix
 
-let get_ZMQ_sock zmq_host zmq_port =
+let get_zmq_sock zmq_host zmq_port =
 	let remote = "tcp://"^zmq_host^":"^zmq_port in
-	let ctx = ZMQ.Context.create () in
-	let raw_sock = ZMQ.Socket.create ctx ZMQ.Socket.push in
+	let ctx = get_context () in
 	print_endline ("Connecting to "^remote^" ...");
-	ZMQ.Socket.connect raw_sock remote;
-	let sock = Lwt_zmq.Socket.of_socket raw_sock in
+	let sock = get_sock ctx remote in
 	print_endline "Connected.";
 	sock
+
+let send_zmq sock thunk =
+	let p_str = allocate string (thunk ()) in
+	(p_str, (return (send_msg sock p_str (String.length !@p_str))))
 
 let get_addr_from_ch = function
 | CLU.TCP {CLU.fd; ip; port} -> begin

@@ -1,6 +1,7 @@
 open Core.Std
 open Lwt
 open Cohttp_lwt_unix
+open Ctypes
 open Har_j
 open Settings
 
@@ -11,7 +12,7 @@ exception Cant_send_har of string
 
 let make_server config =
 	let nb_current = ref 0 in
-	let sock = Network.get_ZMQ_sock config.zmq_host config.zmq_port in
+	let sock = Network.get_zmq_sock config.zmq_host config.zmq_port in
 	let global_archive = Option.map ~f:(fun k -> (module Archive.Make (struct let key = k end) : Archive.Sig_make)) config.key in
 
 	let send_har archive req req_uri res t_client_body t_provider_body client_ip server_ip (t0, har_send, har_wait) startedDateTime =
@@ -37,13 +38,13 @@ let make_server config =
 					startedDateTime;
 				} in
 
-				let har_string = KeyArchive.get_message archive_input |> string_of_message in
+				let (p_str, sent_async) = Network.send_zmq sock (fun () -> KeyArchive.get_message archive_input |> string_of_message) in
 				Lwt.pick [
-					Lwt_zmq.Socket.send sock har_string;
-					Lwt_unix.sleep Settings.zmq_flush_timeout >>= fun () -> Lwt.fail (Cant_send_har har_string);
+					sent_async;
+					Lwt_unix.sleep Settings.zmq_flush_timeout >>= fun () -> Lwt.fail (Cant_send_har !@p_str);
 				]
 			>>= fun () ->
-				if config.debug then Lwt_io.printlf "SENT\n%s\n" har_string else return ()
+				if config.debug then Lwt_io.printlf "SENT\n%s\n" !@p_str else return ()
 		) with ex ->
 			match ex with
 			| Cant_send_har har ->

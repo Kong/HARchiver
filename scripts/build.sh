@@ -9,20 +9,22 @@ atdgen -j -j-std har.atd
 
 corebuild \
 	-tag debug \
+	-no-links \
+	-no-hygiene \
 	-pkg lwt \
 	-pkg lwt.syntax \
 	-pkg cohttp.lwt \
 	-pkg dns.lwt \
-	-pkg lwt-zmq \
 	-pkg atd \
 	-pkg atdgen \
-	-pkg ZMQ \
 	-pkg re.pcre \
+	-pkg ctypes \
+	-pkg ctypes.foreign \
 	main.native
 
-cp main.native ../harchiver
-rm main.native
+gcc -c -lzmq -I.. ../tzmq.c -o tzmq.o
+
+# With -no-links:
+ocamlfind ocamlopt -o ../h2 -cclib -Wl,-E,-lzmq -g -linkpkg -thread -syntax camlp4o -package core,lwt,lwt.syntax,cohttp.lwt,dns.lwt,atd,atdgen,re.pcre,ctypes,ctypes.foreign -I _build tzmq.o har_t.cmx har_j.cmx regex.cmx settings.cmx http_utils.cmx archive.cmx cache.cmx network.cmx proxy.cmx main.cmx
 
 popd &> /dev/null
-
-./scripts/clean.sh

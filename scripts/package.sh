@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 
 ./scripts/build.sh
+./scripts/clean.sh
 
 patchelf --set-rpath '$ORIGIN/lib/' harchiver
 cp harchiver release/
