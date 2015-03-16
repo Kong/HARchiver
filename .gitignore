@@ -16,5 +16,6 @@ har_*.ml*
 harchiver
 release/
 harchiver.tar.gz
+h2
 *.pem
 hotfix/

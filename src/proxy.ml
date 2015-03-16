@@ -7,7 +7,6 @@ open Settings
 type protocol = HTTP | HTTPS
 exception Too_many_requests
 exception Cant_resolve_ip of string * string
-exception Cant_send_har of string
 
 let make_server config =
 	let nb_current = ref 0 in
@@ -39,15 +38,20 @@ let make_server config =
 
 				let har_string = KeyArchive.get_message archive_input |> string_of_message in
 				Lwt.pick [
-					Lwt_zmq.Socket.send sock har_string;
-					Lwt_unix.sleep Settings.zmq_flush_timeout >>= fun () -> Lwt.fail (Cant_send_har har_string);
+					(Lwt_zmq.Socket.send sock har_string
+					>>= fun () ->
+						if config.debug then
+							Lwt_io.printlf "SENT\n%s\n" har_string
+						else
+							return ()
+					);
+					(Lwt_unix.sleep Settings.zmq_flush_timeout
+					>>= fun () ->
+						Lwt_io.printlf "ERROR Could not flush this datapoint to the ZMQ driver within %f seconds:\n%s\n" Settings.zmq_flush_timeout har_string
+					);
 				]
-			>>= fun () ->
-				if config.debug then Lwt_io.printlf "SENT\n%s\n" har_string else return ()
 		) with ex ->
 			match ex with
-			| Cant_send_har har ->
-				Lwt_io.printlf "ERROR Could not flush this datapoint to the ZMQ driver within %f seconds:\n%s\n" Settings.zmq_flush_timeout har
 			| e ->
 				Lwt_io.printlf "ERROR\n%s\n%s" (Exn.to_string e) (Exn.backtrace ())
 		in
