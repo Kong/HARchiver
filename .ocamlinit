@@ -8,6 +8,12 @@ open Lwt
 
 #require "cohttp.lwt"
 
+#require "ctypes"
+#require "ctypes.foreign"
+open Ctypes
+open PosixTypes
+open Foreign
+
 open Cohttp_lwt
 open Cohttp_lwt_unix
 open Cohttp_lwt_unix_io
