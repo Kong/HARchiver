@@ -136,7 +136,7 @@ docker run -p 15000:15000 -p 15001:15001 --name="harchiver_https" harchiver_imag
 
 ## From Source
 
-[Instrictions in this file](INSTALL)
+[Instrictions in this file](INSTALL.md)
 
 ## Network Diagrams
 
