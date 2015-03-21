@@ -17,12 +17,12 @@ cert:
 
 clean:
 	@# For compile.sh
-	rm -f *.cmi
-	rm -f *.cmo
-	rm -f *.cmx
+	@rm -f *.cmi
+	@rm -f *.cmo
+	@rm -f *.cmx
 
 	@# For build.sh
-	pushd src &> /dev/null && \
+	@pushd src &> /dev/null && \
 	rm -f har_*.ml* && \
 	rm -rf _build
 
