@@ -1,7 +1,7 @@
 open Core.Std
 open Lwt
 
-let version = "1.6.3"
+let version = "1.7.0"
 let name = "ApiAnalytics HARchiver"
 
 let zmq_flush_timeout = 20.
