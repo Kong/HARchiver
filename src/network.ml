@@ -30,7 +30,7 @@ let dns_lookup host =
 			Dns_resolver_unix.resolve resolver Q_IN Q_A (Dns.Name.string_to_domain_name host)
 			>>= fun response ->
 				match List.hd response.answers with
-				| None -> return (Error "No answer")
+				| None -> return (Ok host) (* If the system resolver has no response we assume it was a valid IP and just try it *)
 				| Some answer ->
 					match answer.rdata with
 					| A ipv4 -> return (Ok (Ipaddr.V4.to_string ipv4))
