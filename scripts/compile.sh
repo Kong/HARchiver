@@ -22,7 +22,7 @@ ocamlfind ocamlc -c http_utils.mli -package cohttp.lwt
 ocamlfind ocamlc -c http_utils.ml -thread -package core,cohttp.lwt
 
 ocamlfind ocamlc -c archive.mli -package cohttp.lwt
-ocamlfind ocamlc -c archive.ml -thread -package core,cohttp.lwt
+ocamlfind ocamlc -c archive.ml -thread -package core,cohttp.lwt,ctypes
 
 ocamlfind ocamlc -c cache.mli -thread -package core,lwt
 ocamlfind ocamlc -c cache.ml -thread -package core,lwt
@@ -31,7 +31,7 @@ ocamlfind ocamlc -c network.mli -thread -package core,cohttp.lwt,lwt-zmq,ctypes
 ocamlfind ocamlc -c network.ml -thread -package core,cohttp.lwt,lwt-zmq,dns,ctypes
 
 ocamlfind ocamlc -c proxy.mli -package lwt
-ocamlfind ocamlc -c proxy.ml -thread -package core,lwt.syntax,cohttp.lwt,lwt-zmq,ctypes -syntax camlp4o
+ocamlfind ocamlc -c proxy.ml -thread -package core,lwt.syntax,cohttp.lwt,lwt-zmq -syntax camlp4o
 
 ocamlfind ocamlc -c main.ml -thread -package core,lwt
 

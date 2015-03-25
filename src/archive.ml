@@ -1,6 +1,9 @@
 open Core.Std
 open Cohttp_lwt_unix
 open Har_j
+open Ctypes
+open PosixTypes
+open Foreign
 
 type t_input = {
 	req: Request.t;
@@ -21,6 +24,7 @@ type t_get_message =  t_input -> message
 let get_timestamp_ms () = Time.now () |> Time.to_float |> ( *. ) 1000. |> Int.of_float
 let get_timestamp () = Time.now () |> Time.to_float |> Int.of_float
 let get_utc_time_string () = Time.now () |> Time.to_string_abs ~zone:Core.Zone.utc
+(* let get_timestamp_ms () = foreign "get_ms_time" (void @-> returning int64) |> Int64.to_int_exn *)
 
 (* ================================================================================================ *)
 

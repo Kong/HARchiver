@@ -19,23 +19,15 @@ let send_msg = foreign "send_msg" (zmq_sock @-> str_ptr @-> int @-> returning vo
 
 module CLU = Conduit_lwt_unix
 
-let ctx = get_context ()
-
-let get_zmq_sock zmq_host zmq_port =
+let get_ZMQ_sock zmq_host zmq_port =
 	let remote = "tcp://"^zmq_host^":"^zmq_port in
+	let ctx = ZMQ.Context.create () in
+	let raw_sock = ZMQ.Socket.create ctx ZMQ.Socket.push in
 	print_endline ("Connecting to "^remote^" ...");
-	let sock = get_sock ctx remote in
+	ZMQ.Socket.connect raw_sock remote;
+	let sock = Lwt_zmq.Socket.of_socket raw_sock in
 	print_endline "Connected.";
-	Lwt.return sock
-
-let sockets = Lwt_pool.create 500 ~check:(fun _ f -> f false) (fun () -> get_zmq_sock "socket.apianalytics.com" "5000")
-
-let detached_send_msg sock msg len = Lwt_preemptive.detach (send_msg sock msg) len
-
-let send_zmq p_str =
-	Lwt_pool.use sockets (fun sock ->
-		detached_send_msg sock p_str (String.length !@p_str)
-	)
+	sock
 
 let get_addr_from_ch = function
 | CLU.TCP {CLU.fd; ip; port} -> begin
@@ -54,7 +46,7 @@ let dns_lookup host =
 			Dns_resolver_unix.resolve resolver Q_IN Q_A (Dns.Name.string_to_domain_name host)
 			>>= fun response ->
 				match List.hd response.answers with
-				| None -> return (Error "No answer")
+				| None -> return (Ok host)
 				| Some answer ->
 					match answer.rdata with
 					| A ipv4 -> return (Ok (Ipaddr.V4.to_string ipv4))
