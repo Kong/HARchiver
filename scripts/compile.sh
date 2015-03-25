@@ -28,7 +28,7 @@ ocamlfind ocamlc -c cache.mli -thread -package core,lwt
 ocamlfind ocamlc -c cache.ml -thread -package core,lwt
 
 ocamlfind ocamlc -c network.mli -thread -package core,cohttp.lwt,lwt-zmq,ctypes
-ocamlfind ocamlc -c network.ml -thread -package core,cohttp.lwt,lwt-zmq,dns,ctypes
+ocamlfind ocamlc -c network.ml -thread -package core,cohttp.lwt,lwt.preemptive,lwt-zmq,dns,ctypes
 
 ocamlfind ocamlc -c proxy.mli -package lwt
 ocamlfind ocamlc -c proxy.ml -thread -package core,lwt.syntax,cohttp.lwt,lwt-zmq,ctypes -syntax camlp4o

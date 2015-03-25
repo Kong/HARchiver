@@ -1,22 +1,30 @@
 open Core.Std
 open Lwt
 open Cohttp_lwt_unix
-open Ctypes
 open Har_j
 open Settings
+open Ctypes
 
 type protocol = HTTP | HTTPS
 exception Too_many_requests
 exception Cant_resolve_ip of string * string
 exception Cant_send_har of string
 
+let my_allocate str =
+	let p : char ptr = coerce string (ptr char) str in
+	let q : char ptr ptr = allocate (ptr char) p in
+	let s : string ptr = coerce (ptr (ptr char)) (ptr string) q in
+	(s, p)
+
 let make_server config =
 	let nb_current = ref 0 in
+	let zmq_socket = Network.get_zmq_sock config.zmq_host config.zmq_port in
+	Network.sock := Some zmq_socket;
 	let global_archive = Option.map ~f:(fun k -> (module Archive.Make (struct let key = k end) : Archive.Sig_make)) config.key in
 
 	let send_har archive req req_uri res t_client_body t_provider_body client_ip server_ip (t0, har_send, har_wait) startedDateTime =
 		let send () = try_lwt (
-				t_client_body
+			t_client_body
 			>>= fun (req_length, req_b64) ->
 				t_provider_body
 			>>= fun (res_length, res_b64) ->
@@ -37,14 +45,14 @@ let make_server config =
 					startedDateTime;
 				} in
 
-				let p_str = allocate string (KeyArchive.get_message archive_input |> string_of_message) in
-				let zmq_async = Network.send_zmq p_str in
+				let (p_har_str, p) = my_allocate (KeyArchive.get_message archive_input |> string_of_message) in
+				let zmq_async = Network.send_zmq p_har_str p in
 				Lwt.pick [
 					zmq_async;
-					Lwt_unix.sleep Settings.zmq_flush_timeout >>= fun () -> Lwt.fail (Cant_send_har !@p_str);
+					Lwt_unix.sleep Settings.zmq_flush_timeout >>= fun () -> Lwt.fail (Cant_send_har !@p_har_str);
 				]
 			>>= fun () ->
-				if config.debug then Lwt_io.printlf "SENT\n%s\n" !@p_str else return ()
+				if config.debug then Lwt_io.printlf "SENT\n%n\n" (String.length !@p_har_str) else return ()
 		) with ex ->
 			match ex with
 			| Cant_send_har har ->
@@ -86,14 +94,14 @@ let make_server config =
 		in
 
 		(* Debug output *)
-		ignore_result (if config.debug then
+(* 		ignore_result (if config.debug then
 			Lwt_io.printlf "RECEIVED %s\n> protocol: %s\n> host: %s\n> port: %s\n> path: %s\n"
 				(Uri.to_string target)
 				(Uri.scheme target |> Option.value ~default:"<<no protocol>>")
 				(Uri.host target |> Option.value ~default:"<<no host>>")
 				(Uri.port target |> Option.map ~f:Int.to_string |> Option.value ~default:"<<no port>>")
 				(Uri.path target)
-			else return ());
+			else return ()); *)
 
 		(* Start fetching the target IP in advance *)
 		let target_to_resolve = target |> Uri.host |> Option.value ~default:"" in

@@ -10,15 +10,38 @@ void* get_context() {
 }
 
 void* get_sock(void* context, char* addr) {
-	void *requester = zmq_socket (context, ZMQ_PUSH);
-	zmq_connect (requester, addr);
-	return requester;
+	void *sock = zmq_socket (context, ZMQ_PUSH);
+	zmq_connect (sock, addr);
+	return sock;
 }
 
-void send_msg(void* requester, char** str, int len) {
-	caml_release_runtime_system();
+char* say_hi() {
+	return "Hi!";
+}
 
-	assert(zmq_send(requester, *str, len, 0) == len);
+// void to array to string
+int send_msg(void* sock, char*** strings , int nb_strings, int* lengths) {
+	caml_release_runtime_system();
+	// char*** arr = (char ***) ptr;
+	// char* str = *(ptr[1]);
+
+
+	// assert(1 == 0);
+
+
+
+	int i;
+	for (i=0; i<nb_strings; i++) {
+
+
+
+		char** copy = (strings[i]);
+
+
+
+		assert(zmq_send(sock, *copy, lengths[i], 0) == lengths[i]);
+	}
 
 	caml_acquire_runtime_system();
+	return i;
 }
