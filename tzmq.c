@@ -35,11 +35,8 @@ int send_msg(void* sock, char*** strings , int nb_strings, int* lengths) {
 
 
 
-		char** copy = (strings[i]);
 
-
-
-		assert(zmq_send(sock, *copy, lengths[i], 0) == lengths[i]);
+		assert(zmq_send(sock, *(strings[i]), lengths[i], 0) == lengths[i]);
 	}
 
 	caml_acquire_runtime_system();

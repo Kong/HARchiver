@@ -35,13 +35,14 @@ let rec check_length () =
 		| messages ->
 			let msg_arr = CArray.of_list str_ptr messages in
 			let len_arr = CArray.of_list int !len_queue in
+				msg_queue := [];
+				len_queue := [];
+				let save_p_queue = !p_queue in
+				p_queue := [];
 
 			Lwt_preemptive.detach (fun () ->
 				send_msg (Option.value_exn !sock) (to_voidp (CArray.start msg_arr)) (List.length messages) (to_voidp (CArray.start len_arr)) |> Int.to_string |> print_endline
 			) () >>= fun () ->
-				msg_queue := [];
-				len_queue := [];
-				p_queue := [];
 				check_length ()
 
 let () = Lwt.async check_length
