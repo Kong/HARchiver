@@ -40,6 +40,11 @@ type content = {
 	?text: string option;
 }
 
+type postData = {
+	mimeType: string;
+	?text: string option;
+}
+
 type request = {
 	meth <json name="method">: string;
 	url: string;
@@ -48,7 +53,7 @@ type request = {
 	headers: name_value list;
 	headersSize: int;
 	bodySize: int;
-	?content: content option;
+	?postData: postData option;
 }
 
 type response = {
