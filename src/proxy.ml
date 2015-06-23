@@ -36,7 +36,7 @@ let make_server config =
 					timings = (har_send, har_wait, ((get_timestamp_ms ()) - t0 - har_wait));
 				} in
 
-				let har_string = KeyArchive.get_alf archive_input |> string_of_alf in
+				let har_string = KeyArchive.get_alf archive_input |> string_of_alf |> fun x -> "alf_1.0.0 " ^ x in
 				Lwt.pick [
 					(Lwt_zmq.Socket.send sock har_string
 					>>= fun () ->
@@ -88,6 +88,8 @@ let make_server config =
 			| (Some "http", _) | (None, HTTP) | (Some _, _) -> Uri.with_scheme uri (Some "http")
 		in
 
+		let uri_fixed = Uri.with_scheme uri (Uri.scheme target) in
+
 		(* Debug output *)
 		ignore_result (if config.debug then
 			Lwt_io.printlf "RECEIVED %s\n> protocol: %s\n> host: %s\n> port: %s\n> path: %s\n"
@@ -138,7 +140,7 @@ let make_server config =
 					>>= fun (res, provider_body) ->
 						let har_wait = (Archive.get_timestamp_ms ()) - t0 - har_send in
 						let t_provider_body = Http_utils.process_body provider_body config.replays in
-						ignore_result (send_har archive environment req uri res t_client_body t_provider_body client_ip server_ip (t0, har_send, har_wait));
+						ignore_result (send_har archive environment req uri_fixed res t_client_body t_provider_body client_ip server_ip (t0, har_send, har_wait));
 						let provider_headers = Response.headers res in
 
 						(* Make the response manually to choose the right Encoding *)
@@ -172,7 +174,7 @@ let make_server config =
 					t_dns
 					>>= function
 					| Error server_ip | Ok server_ip ->
-						send_har archive environment req uri res t_client_body t_provider_body client_ip server_ip (t0, har_send, har_wait)
+						send_har archive environment req uri_fixed res t_client_body t_provider_body client_ip server_ip (t0, har_send, har_wait)
 			);
 			t_res
 		in
