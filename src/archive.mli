@@ -2,6 +2,7 @@ open Cohttp
 open Har_j
 
 type t_input = {
+	environment: string option;
 	req: Request.t;
 	req_uri: Uri.t; (* Temporary *)
 	res: Response.t;
@@ -12,12 +13,11 @@ type t_input = {
 	client_ip: string;
 	server_ip: string;
 	timings: int * int * int;
-	startedDateTime: string;
 }
 
-type t_get_message =  t_input -> message
+type t_get_alf =  t_input -> alf
 
-module type Sig_make = sig val get_message : t_get_message end
+module type Sig_make = sig val get_alf : t_get_alf end
 module type Sig_arg = sig val key : bytes end
 
 module Make : functor (X : Sig_arg) -> Sig_make

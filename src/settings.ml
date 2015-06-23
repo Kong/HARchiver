@@ -1,8 +1,8 @@
 open Core.Std
 open Lwt
 
-let version = "1.7.0"
-let name = "ApiAnalytics HARchiver"
+let version = "2.0.0"
+let name = "mashape-analytics-proxy"
 
 let zmq_flush_timeout = 20.
 
@@ -15,14 +15,15 @@ let resolver_expire = 30.
 let default_concurrent = 500
 let default_timeout = 6.
 
-let default_zmq_host = "socket.apianalytics.com"
-let default_zmq_port = 5000
+let default_zmq_host = "production.socket.analytics.mashape.com"
+let default_zmq_port = 5500
 
 
 type config = {
 	port: int;
 	https: int option;
 	reverse: (string option * int option option) option;
+	environment: string option;
 	debug: bool;
 	concurrent: int;
 	timeout: float;
@@ -38,7 +39,7 @@ let print_config config =
 	let opt_prepend x = Option.map ~f:((^) x) in
 	let on_off x = if x then "On" else "Off" in
 	ignore_result (Lwt_io.printlf
-		"\nConfiguration:\nHTTP port: %n\nHTTPS port: %s\nProxy mode: %s\nDebug: %s\nMax concurrency: %n\nTimeout: %fs\nReplays: %s\nService-Token: %s\n"
+		"\nConfiguration:\nHTTP port: %n\nHTTPS port: %s\nProxy mode: %s\nEnvironment: %s\nDebug: %s\nMax concurrency: %n\nTimeout: %fs\nReplays: %s\nService-Token: %s\n"
 		config.port
 		(config.https |> opt_string |> Option.value ~default:"Off")
 		(config.reverse
@@ -47,6 +48,7 @@ let print_config config =
 			)
 			|> opt_prepend "Reverse "
 			|> Option.value ~default:"Forward")
+		(config.environment |> Option.value ~default:"Default")
 		(config.debug |> on_off)
 		config.concurrent
 		config.timeout
@@ -54,7 +56,7 @@ let print_config config =
 		(config.key |> Option.value ~default:"None"))
 
 
-let make_config port https reverse debug concurrent timeout replays filter_ua zmq_host zmq_port key =
+let make_config port https reverse environment debug concurrent timeout replays filter_ua zmq_host zmq_port key =
 	let config = {
 		port;
 		https;
@@ -66,6 +68,7 @@ let make_config port https reverse debug concurrent timeout replays filter_ua zm
 				let port = Uri.port uri in
 				((Some host), (Some port))
 		);
+		environment;
 		debug;
 		concurrent = concurrent |> Option.value ~default:default_concurrent;
 		timeout = timeout |> Option.value ~default:default_timeout;

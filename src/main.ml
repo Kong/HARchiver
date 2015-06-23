@@ -21,6 +21,7 @@ let command =
 			+> anon ("port" %: int)
 			+> flag "https" (optional int) ~doc:" Pass the desired HTTPS port. This also means that the files 'cert.pem' and 'key.pem' must be present in the current directory."
 			+> flag "reverse" (optional string) ~doc:" Reverse proxy mode. Pass the desired target. All the incoming requests will be redirected to that hostname or IP."
+			+> flag "env" (optional string) ~doc:" Set which environment to use"
 			+> flag "debug" no_arg ~doc:" Print generated HARs once they've been flushed to ApiAnalytics.com."
 			+> flag "c" (optional int) ~doc:(" Set a maximum number of concurrent requests. This is "^(Int.to_string Settings.default_concurrent)^" by default. Beyond that, make sure your ulimit is high enough.")
 			+> flag "t" (optional float) ~doc:(" Timeout, in seconds. Close the connection if the remote server doesn't respond before the timeout expires. This is "^(Float.to_string Settings.default_timeout)^" seconds by default.")
@@ -30,7 +31,7 @@ let command =
 			+> flag "port" (optional int) ~doc:" (Dev option). Overrides the APIAnalytics port"
 			+> anon (maybe ("service_token" %: string))
 		)
-		(fun port https reverse debug concurrent timeout replays filter_ua zmq_host zmq_port key () ->
-			Settings.make_config port https reverse debug concurrent timeout replays filter_ua zmq_host zmq_port key |> start)
+		(fun port https reverse environment debug concurrent timeout replays filter_ua zmq_host zmq_port key () ->
+			Settings.make_config port https reverse environment debug concurrent timeout replays filter_ua zmq_host zmq_port key |> start)
 
 let () = Command.run ~version:Settings.version ~build_info:"github.com/Mashape/HARchiver" command

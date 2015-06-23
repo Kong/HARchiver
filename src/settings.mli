@@ -14,6 +14,7 @@ type config = {
 	port : int;
 	https : int option;
 	reverse : (string option * int option option) option;
+	environment: string option;
 	debug : bool;
 	concurrent : int;
 	timeout : float;
@@ -24,4 +25,4 @@ type config = {
 	key : string option;
 }
 
-val make_config : int -> int option -> string option -> bool -> int option -> float option -> bool -> string option -> string option -> int option -> string option -> config
+val make_config : int -> int option -> string option -> string option -> bool -> int option -> float option -> bool -> string option -> string option -> int option -> string option -> config

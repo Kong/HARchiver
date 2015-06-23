@@ -13,7 +13,7 @@ let make_server config =
 	let sock = Network.get_ZMQ_sock config.zmq_host config.zmq_port in
 	let global_archive = Option.map ~f:(fun k -> (module Archive.Make (struct let key = k end) : Archive.Sig_make)) config.key in
 
-	let send_har archive req req_uri res t_client_body t_provider_body client_ip server_ip (t0, har_send, har_wait) startedDateTime =
+	let send_har archive environment req req_uri res t_client_body t_provider_body client_ip server_ip (t0, har_send, har_wait) =
 		let send () = try_lwt (
 				t_client_body
 			>>= fun (req_length, req_b64) ->
@@ -23,6 +23,7 @@ let make_server config =
 
 				let open Archive in
 				let archive_input = {
+					environment;
 					req;
 					req_uri;
 					res;
@@ -33,10 +34,9 @@ let make_server config =
 					client_ip;
 					server_ip;
 					timings = (har_send, har_wait, ((get_timestamp_ms ()) - t0 - har_wait));
-					startedDateTime;
 				} in
 
-				let har_string = KeyArchive.get_message archive_input |> string_of_message in
+				let har_string = KeyArchive.get_alf archive_input |> string_of_alf in
 				Lwt.pick [
 					(Lwt_zmq.Socket.send sock har_string
 					>>= fun () ->
@@ -57,19 +57,19 @@ let make_server config =
 		in
 		match config.filter_ua with
 		| None -> send ()
-		| Some filter when Cohttp.Header.get (Request.headers req) "user-agent" |> Option.value ~default:"" |> Regex.matches filter |> not -> send ()
+		| Some filter when Cohttp.Header.get (Request.headers req) "User-Agent" |> Option.value ~default:"" |> Regex.matches filter |> not -> send ()
 		| Some _ -> return ()
 	in
 	let callback (ch, _) req client_body protcol =
 		(* Initiate counters and other bookeeping *)
 		nb_current := (!nb_current + 1);
 		let t0 = Archive.get_timestamp_ms () in
-		let startedDateTime = Archive.get_utc_time_string () in
 		let client_ip = Network.get_addr_from_ch ch in
 		let client_headers = Request.headers req in
+		let environment = Option.first_some (Cohttp.Header.get client_headers "Mashape-Environment") config.environment in
 
 		(* This is necessary for now due to https://github.com/mirage/ocaml-cohttp/issues/248 *)
-		let uri = Request.uri req |> Http_utils.fix_uri in
+		let uri = Request.uri req (* |> Http_utils.fix_uri *) in
 
 		(* Prepare the target *)
 		let target = (match config.reverse with
@@ -82,7 +82,7 @@ let make_server config =
 				| Some p -> Uri.with_port uri p
 				| None -> uri
 		) |> fun uri ->
-			let protocol_header = Cohttp.Header.get client_headers "x-upstream-protocol" |> Option.map ~f:String.lowercase in
+			let protocol_header = Cohttp.Header.get client_headers "Mashape-Upstream-Protocol" |> Option.map ~f:String.lowercase in
 			match (protocol_header, protcol) with
 			| (Some "https", _) | (None, HTTPS) -> Uri.with_scheme uri (Some "https")
 			| (Some "http", _) | (None, HTTP) | (Some _, _) -> Uri.with_scheme uri (Some "http")
@@ -104,7 +104,7 @@ let make_server config =
 
 		(* More bookeeping *)
 		let t_client_body = Http_utils.process_body client_body config.replays in
-		let local_archive = Option.map (Cohttp.Header.get client_headers "Service-Token") ~f:(fun k ->
+		let local_archive = Option.map (Cohttp.Header.get client_headers "Mashape-Service-Token") ~f:(fun k ->
 			(module Archive.Make (struct let key = k end) : Archive.Sig_make)) in
 		let har_send = (Archive.get_timestamp_ms ()) - t0 in
 
@@ -115,7 +115,12 @@ let make_server config =
 			match Option.first_some local_archive global_archive with
 			| None -> Lwt.fail (Failure "Service-Token header missing")
 			| Some archive ->
-				let client_headers_ready = Cohttp.Header.remove client_headers "Service-Token"
+				(* So we're doing an upstream request *)
+				let client_headers_ready = client_headers
+				|> fun h -> Cohttp.Header.remove h "Mashape-Service-Token"
+				|> fun h -> Cohttp.Header.remove h "Mashape-Host-Override"
+				|> fun h -> Cohttp.Header.remove h "Mashape-Environment"
+				|> fun h -> Cohttp.Header.remove h "Mashape-Upstream-Protocol"
 				|> fun h -> Http_utils.set_x_forwarded_for h client_ip
 				in
 
@@ -133,7 +138,7 @@ let make_server config =
 					>>= fun (res, provider_body) ->
 						let har_wait = (Archive.get_timestamp_ms ()) - t0 - har_send in
 						let t_provider_body = Http_utils.process_body provider_body config.replays in
-						ignore_result (send_har archive req uri res t_client_body t_provider_body client_ip server_ip (t0, har_send, har_wait) startedDateTime);
+						ignore_result (send_har archive environment req uri res t_client_body t_provider_body client_ip server_ip (t0, har_send, har_wait));
 						let provider_headers = Response.headers res in
 
 						(* Make the response manually to choose the right Encoding *)
@@ -167,7 +172,7 @@ let make_server config =
 					t_dns
 					>>= function
 					| Error server_ip | Ok server_ip ->
-						send_har archive req uri res t_client_body t_provider_body client_ip server_ip (t0, har_send, har_wait) startedDateTime
+						send_har archive environment req uri res t_client_body t_provider_body client_ip server_ip (t0, har_send, har_wait)
 			);
 			t_res
 		in

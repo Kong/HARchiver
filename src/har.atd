@@ -1,5 +1,8 @@
-type message = {
+type alf = {
+	version: string;
 	serviceToken: string;
+	?environment: string option;
+	clientIPAddress: string;
 	har: har;
 }
 
@@ -23,14 +26,18 @@ type creator = {
 	version: string;
 }
 
+type cache = {
+	?x: int option;
+}
+
 type entry = {
 	serverIPAddress: string;
-	clientIPAddress: string;
 	startedDateTime: string;
 	time: int;
 	request: request;
 	response: response;
 	timings: timings;
+	cache: cache;
 }
 
 type content = {
@@ -52,6 +59,7 @@ type request = {
 	queryString: name_value list;
 	headers: name_value list;
 	headersSize: int;
+	cookies: string list;
 	bodySize: int;
 	?postData: postData option;
 }
@@ -62,6 +70,8 @@ type response = {
 	httpVersion: string;
 	headers: name_value list;
 	headersSize: int;
+	redirectURL: string;
+	cookies: string list;
 	bodySize: int;
 	?content: content option;
 }
