@@ -69,7 +69,12 @@ let make_server config =
 		let environment = Option.first_some (Cohttp.Header.get client_headers "Mashape-Environment") config.environment in
 
 		(* This is necessary for now due to https://github.com/mirage/ocaml-cohttp/issues/248 *)
-		let uri = Request.uri req (* |> Http_utils.fix_uri *) in
+		let uri = Request.uri req
+		|> fun uri ->
+			match Cohttp.Header.get client_headers "Mashape-Host-Override" with
+			| None -> uri
+			| Some x -> Uri.with_host uri (Some x)
+		in
 
 		(* Prepare the target *)
 		let target = (match config.reverse with
@@ -119,6 +124,9 @@ let make_server config =
 			| Some archive ->
 				(* So we're doing an upstream request *)
 				let client_headers_ready = client_headers
+				|> (fun h -> match Cohttp.Header.get h "Mashape-Host-Override" with
+					| None -> h
+					| Some x -> Cohttp.Header.replace h "Host" x)
 				|> fun h -> Cohttp.Header.remove h "Mashape-Service-Token"
 				|> fun h -> Cohttp.Header.remove h "Mashape-Host-Override"
 				|> fun h -> Cohttp.Header.remove h "Mashape-Environment"
