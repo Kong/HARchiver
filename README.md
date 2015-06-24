@@ -8,7 +8,7 @@ HARchiver is a proxy made to be portable, fast and transparent, it takes incomin
 
 ## Cloud Usage
 
-We offer a free, public HARchiver cloud proxy available at `proxy.analytics.mashape.com`, operating on port `15000` for HTTP, and port `15001` for HTTPS. 
+We offer a free, public HARchiver cloud proxy available at `proxy.analytics.mashape.com`, operating on port `80` for HTTP, and port `443` for HTTPS. 
 
 Make sure to send the `Service-Token` header to indicate where to route your logs.
 
