@@ -89,15 +89,19 @@ docker run -p 15000:15000 -p 15001:15001 --name="harchiver_https" harchiver_imag
 You can use HARchiver as a proxy layer between your application and *any* local or remote API server.
 
 ```
-                                         +-------------+
-                                    +--->| Private API |
-                    +-----------+   |    +-------------+
-+-------------+     |           +---+    +-----------------+
-| Application +---->| HARchiver +------->| API Provider #1 |
-+-------------+     |           +---+    +-----------------+
-                    +-----------+   |    +-----------------+
-                                    +--->| API Provider #2 |
-                                         +-----------------+
+                               ┌─────────────────┐                           
+                               │                 │                           
+                               │   Private API   │                           
+                               │                 │        ┌─────────────────┐
+                               └─────────────────┘        │                 │
+                                        ▲           ┌────▶│ API Provider #1 │
+                                     ┌──┘           │     │                 │
+                                     │              │     └─────────────────┘
+ ┌─────────────────┐        ┌─────────────────┐     │     ┌─────────────────┐
+ │                 │        │                 │     │     │                 │
+ │   Application   │───────▶│    HARchiver    │─────┴────▶│ API Provider #2 │
+ │                 │        │                 │           │                 │
+ └─────────────────┘        └─────────────────┘           └─────────────────┘
 ```
 
 Start HARchiver on port `15000` with your Mashape Analytics Service Token:
