@@ -114,7 +114,10 @@ let get_har input = {
 
 (* ================================================================================================ *)
 
-module type Sig_make = sig val get_alf : t_get_alf end
+module type Sig_make = sig
+	val get_alf : t_get_alf
+	val key : string
+end
 module type Sig_arg = sig val key : bytes end
 
 module Make (X : Sig_arg) : Sig_make = struct
@@ -125,4 +128,5 @@ module Make (X : Sig_arg) : Sig_make = struct
 		clientIPAddress = input.client_ip;
 		har = get_har input;
 	}
+	let key = X.key
 end

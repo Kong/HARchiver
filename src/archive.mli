@@ -17,7 +17,10 @@ type t_input = {
 
 type t_get_alf =  t_input -> alf
 
-module type Sig_make = sig val get_alf : t_get_alf end
+module type Sig_make = sig
+	val get_alf : t_get_alf
+	val key : string
+end
 module type Sig_arg = sig val key : bytes end
 
 module Make : functor (X : Sig_arg) -> Sig_make

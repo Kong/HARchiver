@@ -8,10 +8,12 @@ type protocol = HTTP | HTTPS
 exception Too_many_requests
 exception Cant_resolve_ip of string * string
 
+
 let make_server config =
 	let nb_current = ref 0 in
 	let sock = Network.get_ZMQ_sock config.zmq_host config.zmq_port in
 	let global_archive = Option.map ~f:(fun k -> (module Archive.Make (struct let key = k end) : Archive.Sig_make)) config.key in
+	let empty_archive = (module Archive.Make (struct let key = "" end) : Archive.Sig_make) in
 
 	let send_har archive environment req req_uri res t_client_body t_provider_body client_ip server_ip (t0, har_send, har_wait) =
 		let send () = try_lwt (
@@ -20,6 +22,9 @@ let make_server config =
 				t_provider_body
 			>>= fun (res_length, res_b64) ->
 				let module KeyArchive = (val archive : Archive.Sig_make) in
+
+				(* Bypass for XHR *)
+				if KeyArchive.key = "" then return () else
 
 				let open Archive in
 				let archive_input = {
@@ -119,8 +124,15 @@ let make_server config =
 		let response = try_lwt (
 			(* Throw some exceptions if needed, then set some headers *)
 			if !nb_current > config.concurrent then Lwt.fail Too_many_requests else
-			match Option.first_some local_archive global_archive with
-			| None -> Lwt.fail (Failure "Service-Token header missing")
+
+			let archive = match Request.meth req with
+			| `OPTIONS -> Some empty_archive
+			| _ -> Option.first_some local_archive global_archive
+			in
+
+			match archive with
+			| None ->
+				Lwt.fail (Failure "Mashape-Service-Token header missing")
 			| Some archive ->
 				(* So we're doing an upstream request *)
 				let client_headers_ready = client_headers
