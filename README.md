@@ -12,9 +12,11 @@ We offer a free, public HARchiver cloud proxy available at `proxy.analytics.mash
 
 Make sure to send the `Mashape-Service-Token` header to indicate where to route your logs.
 
-**Note:** By default, requests are proxied on the same protocol they were received. To override that, send the header `Mashape-Upstream-Protocol` with the values `HTTP` or `HTTPS`. That makes it possible to query HTTPS-only APIs without enabling HTTPS mode in `HARchiver`.
+**Notes:**
 
-**Note:** There's also the `Mashape-Host-Override` header for use when the `Host` header cannot be set, such as in browser XmlHttpRequest (AJAX).
+- By default, requests are proxied on the same protocol they were received. To override that, send the header `Mashape-Upstream-Protocol` with the values `HTTP` or `HTTPS`. That makes it possible to query HTTPS-only APIs without enabling HTTPS mode in `HARchiver`.
+
+- There's also the `Mashape-Host-Override` header for use when the `Host` header cannot be set, such as in browser XmlHttpRequest *(AJAX)*.
 
 ## Installation
 
@@ -148,10 +150,10 @@ HARchiver can do SSL termination itself (`-https` option), but if you're already
 
 *The SSL termination (aka decryption) can be either done in nginx/HAproxy or HARchiver.*
 
-**Note:** 
+**Note:**
 
 - HARchiver uses only 20Mb of RAM and should be located on the same machine as your API Servers to reduce latency and simplify configuration.
-- 
+
 - if running multiple services per ip, You can inspect the `Host` header in your code to determine what service the client requested, if necessary, or if you wish to limit HARchiver to a specific service / host, use the host name instead of an IP in the previous step.
 
 ```sh
