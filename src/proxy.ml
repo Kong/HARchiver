@@ -8,12 +8,11 @@ type protocol = HTTP | HTTPS
 exception Too_many_requests
 exception Cant_resolve_ip of string * string
 
-
 let make_server config =
 	let nb_current = ref 0 in
 	let sock = Network.get_ZMQ_sock config.zmq_host config.zmq_port in
 	let global_archive = Option.map ~f:(fun k -> (module Archive.Make (struct let key = k end) : Archive.Sig_make)) config.key in
-	let empty_archive = (module Archive.Make (struct let key = "" end) : Archive.Sig_make) in
+	let empty_archive = Some (module Archive.Make (struct let key = "" end) : Archive.Sig_make) in
 
 	let send_har archive environment req req_uri res t_client_body t_provider_body client_ip server_ip (t0, har_send, har_wait) =
 		let send () = try_lwt (
@@ -126,7 +125,7 @@ let make_server config =
 			if !nb_current > config.concurrent then Lwt.fail Too_many_requests else
 
 			let archive = match Request.meth req with
-			| `OPTIONS -> Some empty_archive
+			| `OPTIONS -> Option.first_some local_archive empty_archive
 			| _ -> Option.first_some local_archive global_archive
 			in
 
