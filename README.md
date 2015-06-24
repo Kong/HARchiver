@@ -12,6 +12,10 @@ We offer a free, public HARchiver cloud proxy available at `proxy.analytics.mash
 
 Make sure to send the `Mashape-Service-Token` header to indicate where to route your logs.
 
+**Note:** By default, requests are proxied on the same protocol they were received. To override that, send the header `Mashape-Upstream-Protocol` with the values `HTTP` or `HTTPS`. That makes it possible to query HTTPS-only APIs without enabling HTTPS mode in `HARchiver`.
+
+**Note:** There's also the `Mashape-Host-Override` header for use when the `Host` header cannot be set, such as in browser XmlHttpRequest (AJAX).
+
 ## Installation
 
 ### Linux *(For OSX and Windows use [Docker](#docker))*
@@ -79,9 +83,6 @@ docker run -p 15000:15000 -p 15001:15001 --name="harchiver_https" harchiver_imag
 
 [Instructions in this file](INSTALL.md)
 
-
-**Note:** By default, requests are proxied on the same protocol they were received. To override that, send the header `X-Upstream-Protocol` with the values `HTTP` or `HTTPS`. That makes it possible to query HTTPS-only APIs without enabling HTTPS mode in `HARchiver`.
-
 ## Usage
 
 ### For API Consumers *(proxy)*
@@ -110,7 +111,7 @@ Start HARchiver on port `15000` with your Mashape Analytics Service Token:
 Now you can send requests through the HARchiver using the `Host` header, here's an example of making a GET request to `http://mockbin.org/request` through the HARchiver proxy:
 
 ```sh
-curl -H "Host: mockbin.org" -H "X-Upstream-Protocol: HTTP" http://127.0.0.1:15000/get
+curl -H "Host: mockbin.org" -H "Mashape-Upstream-Protocol: HTTP" http://127.0.0.1:15000/get
 ```
 
 That's it, your data is now available on [Mashape Analytics](https://www.apianalytics.com)!
@@ -148,7 +149,9 @@ HARchiver can do SSL termination itself (`-https` option), but if you're already
 *The SSL termination (aka decryption) can be either done in nginx/HAproxy or HARchiver.*
 
 **Note:** 
+
 - HARchiver uses only 20Mb of RAM and should be located on the same machine as your API Servers to reduce latency and simplify configuration.
+- 
 - if running multiple services per ip, You can inspect the `Host` header in your code to determine what service the client requested, if necessary, or if you wish to limit HARchiver to a specific service / host, use the host name instead of an IP in the previous step.
 
 ```sh
@@ -163,7 +166,7 @@ That's it, your data is now available on [Mashape Analytics](https://www.apianal
 harchiver PORT [SERVICE_TOKEN]
 ```
 
-- Without `SERVICE_TOKEN` the HTTP header `Service-Token` must be set on every request.
+- Without `SERVICE_TOKEN` the HTTP header `MAshape-Service-Token` must be set on every request.
 
 ### Optional Flags
 
