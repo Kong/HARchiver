@@ -89,19 +89,16 @@ docker run -p 15000:15000 -p 15001:15001 --name="harchiver_https" harchiver_imag
 You can use HARchiver as a proxy layer between your application and *any* local or remote API server.
 
 ```
-                               ┌─────────────────┐                           
-                               │                 │                           
-                               │   Private API   │                           
-                               │                 │        ┌─────────────────┐
-                               └─────────────────┘        │                 │
-                                        ▲           ┌────▶│ API Provider #1 │
-                                     ┌──┘           │     │                 │
-                                     │              │     └─────────────────┘
- ┌─────────────────┐        ┌─────────────────┐     │     ┌─────────────────┐
- │                 │        │                 │     │     │                 │
- │   Application   │───────▶│    HARchiver    │─────┴────▶│ API Provider #2 │
- │                 │        │                 │           │                 │
- └─────────────────┘        └─────────────────┘           └─────────────────┘
+                          ┌─────────────┐                 
+                          │ Private API │                 
+                          └─────────────┘                 
+                                 ▲                        
+                           ┌─────┘     ┌─────────────────┐
+                           │        ┌─▶│ API Provider #1 │
+ ┌─────────────┐    ┌─────────────┐ │  └─────────────────┘
+ │ Application │───▶│  HARchiver  │─┤  ┌─────────────────┐
+ └─────────────┘    └─────────────┘ └─▶│ API Provider #2 │
+                                       └─────────────────┘
 ```
 
 Start HARchiver on port `15000` with your Mashape Analytics Service Token:
@@ -123,11 +120,9 @@ That's it, your data is now available on [Mashape Analytics](https://www.apianal
 To capture *all* incoming traffic to your API, start HARchiver on port `15000` in reverse-proxy mode with your Mashape Analytics Service Token:
 
 ```
- ┌─────────────────┐        ┌─────────────────┐           ┌─────────────────┐
- │                 │        │                 │           │                 │
- │  The Internet   │───────▶│    HARchiver    │──────────▶│    Your API     │
- │                 │        │                 │           │                 │
- └─────────────────┘        └─────────────────┘           └─────────────────┘
+ ┌─────────────┐     ┌─────────────┐     ┌─────────────┐
+ │The Internet │────▶│  HARchiver  │────▶│  Your API   │
+ └─────────────┘     └─────────────┘     └─────────────┘
 ```
 
 ```sh
@@ -139,21 +134,15 @@ In this example, `10.1.2.3:8080` is the location of your API. All incoming reque
 HARchiver can do SSL termination itself (`-https` option), but if you're already using nginx to do so, you should simply make nginx proxy to HARchiver which proxies to your application. *See the network diagram below*
 
 ```
-                                              ┌─────────────────┐   ┌─────────────────┐
-                                              │                 │   │                 │
-                                           ┌─▶│    HARchiver    │──▶│    Your API     │
-                                           │  │                 │   │                 │
-                                           │  └─────────────────┘   └─────────────────┘
- ┌─────────────────┐   ┌─────────────────┐ │  ┌─────────────────┐   ┌─────────────────┐
- │                 │   │      nginx      │ │  │                 │   │                 │
- │  The Internet   │──▶│     HAproxy     │─┼─▶│    HARchiver    │──▶│    Your API     │
- │                 │   │       SSL       │ │  │                 │   │                 │
- └─────────────────┘   └─────────────────┘ │  └─────────────────┘   └─────────────────┘
-                                           │  ┌─────────────────┐   ┌─────────────────┐
-                                           │  │                 │   │                 │
-                                           └─▶│    HARchiver    │──▶│    Your API     │
-                                              │                 │   │                 │
-                                              └─────────────────┘   └─────────────────┘
+                                       ┌─────────────┐       ┌───────────┐
+                                    ┌─▶│  HARchiver  │──────▶│  API #1   │
+                    ┌─────────────┐ │  └─────────────┘       └───────────┘
+ ┌─────────────┐    │    nginx    │ │  ┌─────────────┐       ┌───────────┐
+ │The Internet │───▶│   HAproxy   │─┼─▶│  HARchiver  │──────▶│  API #2   │
+ └─────────────┘    │     SSL     │ │  └─────────────┘       └───────────┘
+                    └─────────────┘ │  ┌─────────────┐       ┌───────────┐
+                                    └─▶│  HARchiver  │──────▶│  API #3   │
+                                       └─────────────┘       └───────────┘
 ```
 
 *The SSL termination (aka decryption) can be either done in nginx/HAproxy or HARchiver.*
