@@ -10,7 +10,7 @@ HARchiver is a proxy made to be portable, fast and transparent, it takes incomin
 
 We offer a free, public HARchiver cloud proxy available at `proxy.analytics.mashape.com`, operating on port `80` for HTTP, and port `443` for HTTPS. 
 
-Make sure to send the `Service-Token` header to indicate where to route your logs.
+Make sure to send the `Mashape-Service-Token` header to indicate where to route your logs.
 
 ## Installation
 
