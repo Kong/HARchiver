@@ -166,7 +166,7 @@ That's it, your data is now available on [Mashape Analytics](https://www.apianal
 harchiver PORT [SERVICE_TOKEN]
 ```
 
-- Without `SERVICE_TOKEN` the HTTP header `MAshape-Service-Token` must be set on every request.
+- Without `SERVICE_TOKEN` the HTTP header `Mashape-Service-Token` must be set on every request.
 
 ### Optional Flags
 
