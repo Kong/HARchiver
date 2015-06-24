@@ -84,8 +84,6 @@ docker run -p 15000:15000 -p 15001:15001 --name="harchiver_https" harchiver_imag
 
 ## Usage
 
-[See the network diagrams](#network-diagrams)
-
 ### For API Consumers *(proxy)*
 
 You can use HARchiver as a proxy layer between your application and *any* local or remote API server.
