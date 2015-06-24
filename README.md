@@ -1,99 +1,40 @@
 # HARchiver
 
-Universal lightweight proxy for apianalytics.com that was made to be portable, fast and transparent.
+> for more information on Mashape Analytics, please visit [apianalytics.com](https://www.apianalytics.com)
 
-HARchiver is a proxy, it takes incoming HTTP/HTTPS calls and routes them to their final destination, collecting stats in the background without slowing down the request itself.
+## About
 
-We now have a free public HARchiver server available at `proxy.apianalytics.com:15000` for HTTP and port `15001` for HTTPS. Make sure to send the `Service-Token` header.
+HARchiver is a proxy made to be portable, fast and transparent, it takes incoming HTTP/HTTPS calls and routes them to their final destination, collecting stats in the background without slowing down the request itself.
 
-First get your [APIAnalytics.com](http://www.apianalytics.com) service token and [install HARchiver](#installation).
+## Cloud Usage
 
-**Note:** By default, requests are proxied on the same protocol they were received. To override that, send the header `X-Upstream-Protocol` with the values HTTP or HTTPS. That makes it possible to query HTTPS-only APIs without enabling HTTPS mode in HARchiver.
+We offer a free, public HARchiver cloud proxy available at `proxy.analytics.mashape.com`, operating on port `15000` for HTTP, and port `15001` for HTTPS. 
 
-[See the network diagrams](#network-diagrams)
-
-### For API Consumers *(proxy)*
-
-You can use HARchiver as a proxy layer between your application and *any* local or remote API server. *([see network diagram](#proxy))*
-
-Start HARchiver on port 15000 with your API analytics service token:
-
-```shell
-./harchiver 15000 SERVICE_TOKEN
-```
-
-Now you can send requests through the HARchiver using the `Host` header, here's an example of making a GET request to `https://httpbin.org/get` through the HARchiver proxy:
-
-```shell
-curl -H "Host: httpbin.org" -H "X-Upstream-Protocol: HTTPS" http://127.0.0.1:15000/get
-```
-
-That's it, your data is now available on [APIAnalytics.com](http://www.apianalytics.com)!
-
-### For API Creators *(reverse proxy)*
-
-To capture *all* incoming traffic to your API, start HARchiver on port 15000 in reverse-proxy mode with your API analytics service token:
-
-```shell
-./harchiver 15000 -reverse 10.1.2.3:8080 SERVICE_TOKEN
-```
-
-In this example, `10.1.2.3:8080` is the location of your API. All incoming requests will be directed there.
-
-HARchiver can do SSL termination itself (`-https` option), but if you're already using nginx to do so, you should simply make nginx proxy to HARchiver which proxies to your application. [See the network diagram](#reverse-proxy)
-
-**Note:** if running multiple services per ip, You can inspect the `Host` header in your code to determine what service the client requested, if necessary, or if you wish to limit HARchiver to a specific service / host, use the host name instead of an IP in the previous step.
-
-```shell
-curl http://127.0.0.1:15000/some/url/on/the/api
-```
-
-That's it, your data is now available on [APIAnalytics.com](http://www.apianalytics.com)!
-
-## Usage
-
-```shell
-harchiver PORT [OPTIONAL_SERVICE_TOKEN]
-```
-
-- Without `OPTIONAL_SERVICE_TOKEN` the HTTP header `Service-Token` must be set on every request.
-
-### Optional Flags
-
-| Flag              | Description                                                                                          |
-| ----------------- | ---------------------------------------------------------------------------------------------------- |
-| `-c NB`           | maximum number of concurrent requests. *(default: 500)*                                              |
-| `-debug`          | output the generated data on-the-fly                                                                 |
-| `-https PORT`     | add HTTPS support. *The files `key.cert` & `cert.pem` need to be in the same directory as HARchiver* |
-| `-replays`        | enable replays by sending the body of the requests in the ALF                                        |
-| `-reverse target` | start in reverse-proxy mode                                                                          |
-| `-t TIMEOUT`      | set remote server response timeout. *(default: 6 seconds)*                                           |
-| `-version`        | displays the version number                                                                          |
-| `-help`           | displays usage instructions                                                                          |
+Make sure to send the `Service-Token` header to indicate where to route your logs.
 
 ## Installation
 
 ### Linux *(For OSX and Windows use [Docker](#docker))*
 
-```shell
-wget https://github.com/Mashape/harchiver/releases/download/v1.7.0/harchiver.tar.gz
+Grab the [latest release](https://github.com/Mashape/HARchiver/releases), then follow the instructions below:
+
+```sh
+wget https://github.com/Mashape/harchiver/releases/download/[VERSION]/harchiver.tar.gz
 tar xzvf harchiver.tar.gz
 cd release
 ./harchiver
 ```
 
-If the program reports a GLIBC error on startup, please [open a Github Issue](https://github.com/APIAnalytics/HARchiver/issues).
-
-If you expect massive load, [up the server's `ulimit`](http://www.cyberciti.biz/faq/linux-increase-the-maximum-number-of-open-files/)
-
+- If the program reports a GLIBC error on startup, please [open a Github Issue](https://github.com/Mashape/HARchiver/issues).
+- If you expect massive load, [up the server's `ulimit`](http://www.cyberciti.biz/faq/linux-increase-the-maximum-number-of-open-files/)
 
 ### Docker
 
 #### HTTP only
 
-The only thing needed is to create a container with the correct port forwarding and [command-line options](#usage) from the image.
+The only thing needed is to create a container with the correct port forwarding and [command-line options](#options) from the image.
 
-```shell
+```sh
 # Download the image
 docker pull mashape/harchiver
 
@@ -103,7 +44,7 @@ docker run -p 15000:15000 --name="harchiver_http" mashape/harchiver
 docker run -p 15000:15000 --name="harchiver_http" mashape/harchiver /release/harchiver 15000 SERVICE_TOKEN
 ```
 
-There's now a container named `harchiver_http` that can be started easily with `docker start harchiver_http`. That container can be removed and recreated from the `mashape/harchiver` image easily to change the [command-line options](#usage).
+There's now a container named `harchiver_http` that can be started easily with `docker start harchiver_http`. That container can be removed and recreated from the `mashape/harchiver` image easily to change the [command-line options](#options).
 
 #### With HTTPS
 
@@ -111,7 +52,7 @@ The certificate and key must be copied into a new image based on the `mashape/ha
 
 On boot2docker, don't forget to run `$(boot2docker shellinit)`.
 
-```shell
+```sh
 # Download the image
 docker pull mashape/harchiver
 
@@ -134,15 +75,22 @@ docker commit -m "Added https support" harchiver_http harchiver_image_https
 docker run -p 15000:15000 -p 15001:15001 --name="harchiver_https" harchiver_image_https /release/harchiver 15000 -https 15001 SERVICE_TOKEN
 ```
 
-## From Source
+### From Source
 
-[Instrictions in this file](INSTALL.md)
+[Instructions in this file](INSTALL.md)
 
-## Network Diagrams
 
-###### Proxy
+**Note:** By default, requests are proxied on the same protocol they were received. To override that, send the header `X-Upstream-Protocol` with the values `HTTP` or `HTTPS`. That makes it possible to query HTTPS-only APIs without enabling HTTPS mode in `HARchiver`.
 
-<pre><code>
+## Usage
+
+[See the network diagrams](#network-diagrams)
+
+### For API Consumers *(proxy)*
+
+You can use HARchiver as a proxy layer between your application and *any* local or remote API server.
+
+```
                                          +-------------+
                                     +--->| Private API |
                     +-----------+   |    +-------------+
@@ -152,25 +100,43 @@ docker run -p 15000:15000 -p 15001:15001 --name="harchiver_https" harchiver_imag
                     +-----------+   |    +-----------------+
                                     +--->| API Provider #2 |
                                          +-----------------+
-<code></pre>
+```
 
-###### Reverse Proxy
+Start HARchiver on port `15000` with your Mashape Analytics Service Token:
 
-<pre><code>
+```sh
+./harchiver 15000 SERVICE_TOKEN
+```
+
+Now you can send requests through the HARchiver using the `Host` header, here's an example of making a GET request to `http://mockbin.org/request` through the HARchiver proxy:
+
+```sh
+curl -H "Host: mockbin.org" -H "X-Upstream-Protocol: HTTP" http://127.0.0.1:15000/get
+```
+
+That's it, your data is now available on [Mashape Analytics](https://www.apianalytics.com)!
+
+### For API Creators *(reverse proxy)*
+
+To capture *all* incoming traffic to your API, start HARchiver on port `15000` in reverse-proxy mode with your Mashape Analytics Service Token:
+
+```
                      +-----------+     +-----------------+
 +--------------+     |           |     |                 |
 | The Internet +---->| HARchiver +---->| Your API Server |
 +--------------+     |           |     |                 |
                      +-----------+     +-----------------+
-<code></pre>
+```
 
-###### Reverse Proxy *(with additional proxy layers)*
+```sh
+./harchiver 15000 -reverse 10.1.2.3:8080 SERVICE_TOKEN
+```
 
-*The SSL termination (aka decryption) can be either done in nginx/HAproxy or HARchiver.*
+In this example, `10.1.2.3:8080` is the location of your API. All incoming requests will be directed there.
 
-HARchiver uses only 20Mb of RAM and should be located on the same machine as your API Servers to reduce latency and simplify configuration.
+HARchiver can do SSL termination itself (`-https` option), but if you're already using nginx to do so, you should simply make nginx proxy to HARchiver which proxies to your application. *See the network diagram below*
 
-<pre><code>
+```
                                            +-----------+     +--------------------+
                                      +---->| HARchiver +---->| Your API Server #1 |
                      +-----------+   |     +-----------+     +--------------------+
@@ -180,4 +146,43 @@ HARchiver uses only 20Mb of RAM and should be located on the same machine as you
                      +-----------+   |     +-----------+     +--------------------+
                                      +---->| HARchiver +---->| Your API Server #3 |
                                            +-----------+     +--------------------+
-<code></pre>
+```
+
+*The SSL termination (aka decryption) can be either done in nginx/HAproxy or HARchiver.*
+
+**Note:** 
+- HARchiver uses only 20Mb of RAM and should be located on the same machine as your API Servers to reduce latency and simplify configuration.
+- if running multiple services per ip, You can inspect the `Host` header in your code to determine what service the client requested, if necessary, or if you wish to limit HARchiver to a specific service / host, use the host name instead of an IP in the previous step.
+
+```sh
+curl http://127.0.0.1:15000/some/url/on/the/api
+```
+
+That's it, your data is now available on [Mashape Analytics](https://www.apianalytics.com)!
+
+## Options
+
+```sh
+harchiver PORT [SERVICE_TOKEN]
+```
+
+- Without `SERVICE_TOKEN` the HTTP header `Service-Token` must be set on every request.
+
+### Optional Flags
+
+| Flag              | Description                                                                                          | Default |
+| ----------------- | ---------------------------------------------------------------------------------------------------- | ------- |
+| `-c NB`           | maximum number of concurrent requests.                                                               | `500`   |
+| `-debug`          | output the generated data on-the-fly                                                                 | `-`     |
+| `-https PORT`     | add HTTPS support. *The files `key.cert` & `cert.pem` need to be in the same directory as HARchiver* | `-`     |
+| `-replays`        | enable replays by sending the body of the requests in the ALF                                        | `-`     |
+| `-reverse target` | start in reverse-proxy mode                                                                          | `-`     |
+| `-t TIMEOUT`      | set remote server response timeout in seconds.                                                       | `6`     |
+| `-version`        | displays the version number                                                                          |         |
+| `-help`           | displays usage instructions                                                                          |         |
+
+## Copyright and license
+
+Copyright Mashape Inc, 2015.
+
+Licensed under [the MIT License](https://github.com/Mashape/HARchiver/blob/master/LICENSE)
