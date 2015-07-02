@@ -64,7 +64,7 @@ let make_server config =
 		| Some filter when Cohttp.Header.get (Request.headers req) "User-Agent" |> Option.value ~default:"" |> Regex.matches filter |> not -> send ()
 		| Some _ -> return ()
 	in
-	let callback (ch, _) req client_body protcol =
+	let callback (ch, _) req client_body protocol =
 		(* Initiate counters and other bookeeping *)
 		nb_current := (!nb_current + 1);
 		let t0 = Archive.get_timestamp_ms () in
@@ -72,7 +72,6 @@ let make_server config =
 		let client_headers = Request.headers req in
 		let environment = Option.first_some (Cohttp.Header.get client_headers "Mashape-Environment") config.environment in
 
-		(* This is necessary for now due to https://github.com/mirage/ocaml-cohttp/issues/248 *)
 		let uri = Request.uri req
 		|> fun uri ->
 			match Cohttp.Header.get client_headers "Mashape-Host-Override" with
@@ -91,12 +90,17 @@ let make_server config =
 				| Some p -> Uri.with_port uri p
 				| None -> uri
 		) |> fun uri ->
-			let protocol_header = Cohttp.Header.get client_headers "Mashape-Upstream-Protocol" |> Option.map ~f:String.lowercase in
-			match (protocol_header, protcol) with
+			let protocol_header = (Option.first_some
+				(Cohttp.Header.get client_headers "Mashape-Upstream-Protocol")
+				(Cohttp.Header.get client_headers "X-Forwarded-Proto"))
+			|> Option.map ~f:String.lowercase
+			in
+			match (protocol_header, protocol) with
 			| (Some "https", _) | (None, HTTPS) -> Uri.with_scheme uri (Some "https")
 			| (Some "http", _) | (None, HTTP) | (Some _, _) -> Uri.with_scheme uri (Some "http")
 		in
 
+		(* This is the URI used to generate the ALF. Same as target, except that it doesn't contain the Host/Target/IP manipulations *)
 		let uri_fixed = Uri.with_scheme uri (Uri.scheme target) in
 
 		(* Debug output *)
@@ -142,6 +146,7 @@ let make_server config =
 				|> fun h -> Cohttp.Header.remove h "Mashape-Host-Override"
 				|> fun h -> Cohttp.Header.remove h "Mashape-Environment"
 				|> fun h -> Cohttp.Header.remove h "Mashape-Upstream-Protocol"
+				|> fun h -> Cohttp.Header.remove h "X-Forwarded-Proto"
 				|> fun h -> Http_utils.set_x_forwarded_for h client_ip
 				in
 
