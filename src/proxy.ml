@@ -68,8 +68,9 @@ let make_server config =
 		(* Initiate counters and other bookeeping *)
 		nb_current := (!nb_current + 1);
 		let t0 = Archive.get_timestamp_ms () in
-		let client_ip = Network.get_addr_from_ch ch in
 		let client_headers = Request.headers req in
+		let client_ip = Http_utils.get_header_ip client_headers
+		|> Option.value ~default:(Network.get_addr_from_ch ch) in
 		let environment = Option.first_some (Cohttp.Header.get client_headers "Mashape-Environment") config.environment in
 
 		let uri = Request.uri req

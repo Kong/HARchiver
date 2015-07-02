@@ -22,6 +22,19 @@ let set_x_forwarded_for h client_ip =
 	| None -> Cohttp.Header.add h "X-Forwarded-For" client_ip
 	| Some x -> Cohttp.Header.replace h "X-Forwarded-For" (x ^ ", " ^ client_ip)
 
+let get_header_ip h =
+	match Cohttp.Header.get h "X-Real-Ip" with
+	| Some ip as found -> found
+	| None -> (
+		match Cohttp.Header.get h "X-Forwarded-For" with
+		| None -> None
+		| Some forwarded ->
+			String.split ~on:',' forwarded
+			|> List.hd
+			|> Option.map ~f:String.strip
+	)
+
+
 (* Body *)
 let process_body body replays =
 	let clone = body |> Body.to_stream |> Lwt_stream.clone in
