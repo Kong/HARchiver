@@ -14,9 +14,9 @@ let get_ZMQ_sock zmq_host zmq_port =
 	sock
 
 let get_addr_from_ch = function
-| CLU.TCP {CLU.fd; ip; port} -> begin
+| CLU.TCP {CLU.fd; _} -> begin (* Also contains ip and port *)
 	match Lwt_unix.getpeername fd with
-	| Lwt_unix.ADDR_INET (ia,port) -> Ipaddr.to_string (Ipaddr_unix.of_inet_addr ia)
+	| Lwt_unix.ADDR_INET (ia, _port) -> Ipaddr.to_string (Ipaddr_unix.of_inet_addr ia)
 	| Lwt_unix.ADDR_UNIX path -> sprintf "sock:%s" path end
 | _ -> "<error>"
 

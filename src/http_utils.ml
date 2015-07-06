@@ -24,7 +24,7 @@ let set_x_forwarded_for h client_ip =
 
 let get_header_ip h =
 	match Cohttp.Header.get h "X-Real-Ip" with
-	| Some ip as found -> found
+	| Some _ as found -> found
 	| None -> (
 		match Cohttp.Header.get h "X-Forwarded-For" with
 		| None -> None

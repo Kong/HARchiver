@@ -25,8 +25,7 @@ let make_server config =
 				(* Bypass for XHR *)
 				if KeyArchive.key = "" then return () else
 
-				let open Archive in
-				let archive_input = {
+				let archive_input = Archive.({
 					environment;
 					req;
 					req_uri;
@@ -38,7 +37,7 @@ let make_server config =
 					client_ip;
 					server_ip;
 					timings = (har_send, har_wait, ((get_timestamp_ms ()) - t0 - har_wait));
-				} in
+				}) in
 
 				let har_string = KeyArchive.get_alf archive_input |> string_of_alf |> fun x -> "alf_1.0.0 " ^ x in
 				Lwt.pick [

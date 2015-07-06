@@ -92,7 +92,7 @@ let get_cache = {
 	x = None;
 }
 
-let get_har_entry {req; req_uri; res; req_length; res_length; req_b64; res_b64; server_ip; timings=(t1, t2, t3);} = {
+let get_har_entry {req; req_uri; res; req_length; res_length; req_b64; res_b64; server_ip; timings=(t1, t2, t3); _} = {
 	serverIPAddress = server_ip;
 	startedDateTime = get_utc_time_string ();
 	time = (t1 + t2 + t3);
@@ -118,7 +118,7 @@ module type Sig_make = sig
 	val get_alf : t_get_alf
 	val key : string
 end
-module type Sig_arg = sig val key : bytes end
+module type Sig_arg = sig val key : string end
 
 module Make (X : Sig_arg) : Sig_make = struct
 	let get_alf input = {

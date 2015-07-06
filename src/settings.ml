@@ -1,7 +1,7 @@
 open Core.Std
 open Lwt
 
-let version = "2.0.0"
+let version = "2.0.2"
 let name = "mashape-analytics-proxy"
 
 let zmq_flush_timeout = 20.
@@ -39,7 +39,8 @@ let print_config config =
 	let opt_prepend x = Option.map ~f:((^) x) in
 	let on_off x = if x then "On" else "Off" in
 	ignore_result (Lwt_io.printlf
-		"\nConfiguration:\nHTTP port: %n\nHTTPS port: %s\nProxy mode: %s\nEnvironment: %s\nDebug: %s\nMax concurrency: %n\nTimeout: %fs\nReplays: %s\nService-Token: %s\n"
+		"\nVersion %s\n\nConfiguration:\nHTTP port: %n\nHTTPS port: %s\nProxy mode: %s\nEnvironment: %s\nDebug: %s\nMax concurrency: %n\nTimeout: %fs\nReplays: %s\nService-Token: %s\n"
+		version
 		config.port
 		(config.https |> opt_string |> Option.value ~default:"Off")
 		(config.reverse
