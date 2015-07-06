@@ -15,7 +15,7 @@ let resolver_expire = 30.
 let default_concurrent = 500
 let default_timeout = 6.
 
-let default_zmq_host = "production.socket.analytics.mashape.com"
+let default_zmq_host = "socket.analytics.mashape.com"
 let default_zmq_port = 5500
 
 
