@@ -6,6 +6,7 @@ type t_input = {
 	environment: string option;
 	req: Request.t;
 	req_uri: Uri.t;
+	req_headers: Cohttp.Header.t;
 	res: Response.t;
 	req_length: int;
 	res_length: int;
@@ -52,19 +53,18 @@ let get_har_postData headers size b64 =
 	else
 		None
 
-let get_har_request req req_uri req_length req_b64 =
-	let headers = req |> Request.headers in
-	let raw_headers = headers |> Cohttp.Header.to_list in
+let get_har_request req req_uri req_headers req_length req_b64 =
+	let raw_headers = req_headers |> Cohttp.Header.to_list in
 	{
 		meth = Cohttp.Code.string_of_method (Request.meth req);
 		url = Uri.to_string req_uri;
 		httpVersion = Cohttp.Code.string_of_version (Request.version req);
 		queryString = req |> Request.uri |> Uri.query |> Http_utils.name_value_of_query;
 		headers = raw_headers |> Http_utils.name_value_of_headers;
-		headersSize = req |> Request.headers |> Http_utils.length_of_headers;
+		headersSize = req_headers |> Http_utils.length_of_headers;
 		cookies = [];
 		bodySize = req_length;
-		postData = get_har_postData headers req_length req_b64;
+		postData = get_har_postData req_headers req_length req_b64;
 	}
 
 let get_har_reponse res res_length res_b64 =
@@ -92,11 +92,11 @@ let get_cache = {
 	x = None;
 }
 
-let get_har_entry {req; req_uri; res; req_length; res_length; req_b64; res_b64; server_ip; timings=(t1, t2, t3); _} = {
+let get_har_entry {req; req_uri; req_headers; res; req_length; res_length; req_b64; res_b64; server_ip; timings=(t1, t2, t3); _} = {
 	serverIPAddress = server_ip;
 	startedDateTime = get_utc_time_string ();
 	time = (t1 + t2 + t3);
-	request = get_har_request req req_uri req_length req_b64;
+	request = get_har_request req req_uri req_headers req_length req_b64;
 	response = get_har_reponse res res_length res_b64;
 	timings = get_har_timings (t1, t2, t3);
 	cache = get_cache;

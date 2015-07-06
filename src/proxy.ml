@@ -14,7 +14,7 @@ let make_server config =
 	let global_archive = Option.map ~f:(fun k -> (module Archive.Make (struct let key = k end) : Archive.Sig_make)) config.key in
 	let empty_archive = Some (module Archive.Make (struct let key = "" end) : Archive.Sig_make) in
 
-	let send_har archive environment req req_uri res t_client_body t_provider_body client_ip server_ip (t0, har_send, har_wait) =
+	let send_har archive environment req req_uri req_headers res t_client_body t_provider_body client_ip server_ip (t0, har_send, har_wait) =
 		let send () = try_lwt (
 				t_client_body
 			>>= fun (req_length, req_b64) ->
@@ -29,6 +29,7 @@ let make_server config =
 					environment;
 					req;
 					req_uri;
+					req_headers;
 					res;
 					req_length;
 					res_length;
@@ -68,8 +69,8 @@ let make_server config =
 		nb_current := (!nb_current + 1);
 		let t0 = Archive.get_timestamp_ms () in
 		let client_headers = Request.headers req in
-		let client_ip = Http_utils.get_header_ip client_headers
-		|> Option.value ~default:(Network.get_addr_from_ch ch) in
+		let client_ip = Http_utils.get_header_ip client_headers |> Option.value ~default:(Network.get_addr_from_ch ch) in
+		let client_headers_ready = Http_utils.sanitize_headers client_headers client_ip in
 		let environment = Option.first_some (Cohttp.Header.get client_headers "Mashape-Environment") config.environment in
 
 		let uri = Request.uri req
@@ -137,19 +138,6 @@ let make_server config =
 			| None ->
 				Lwt.fail (Failure "Mashape-Service-Token header missing")
 			| Some archive ->
-				(* So we're doing an upstream request *)
-				let client_headers_ready = client_headers
-				|> (fun h -> match Cohttp.Header.get h "Mashape-Host-Override" with
-					| None -> h
-					| Some x -> Cohttp.Header.replace h "Host" x)
-				|> fun h -> Cohttp.Header.remove h "Mashape-Service-Token"
-				|> fun h -> Cohttp.Header.remove h "Mashape-Host-Override"
-				|> fun h -> Cohttp.Header.remove h "Mashape-Environment"
-				|> fun h -> Cohttp.Header.remove h "Mashape-Upstream-Protocol"
-				|> fun h -> Cohttp.Header.remove h "X-Forwarded-Proto"
-				|> fun h -> Http_utils.set_x_forwarded_for h client_ip
-				in
-
 				(* Do the remote call using the prefetched cached IP. The whole thing has a Lwt.pick timeout *)
 				let remote_call = (
 						t_dns
@@ -164,7 +152,7 @@ let make_server config =
 					>>= fun (res, provider_body) ->
 						let har_wait = (Archive.get_timestamp_ms ()) - t0 - har_send in
 						let t_provider_body = Http_utils.process_body provider_body config.replays in
-						ignore_result (send_har archive environment req uri_fixed res t_client_body t_provider_body client_ip server_ip (t0, har_send, har_wait));
+						ignore_result (send_har archive environment req uri_fixed client_headers_ready res t_client_body t_provider_body client_ip server_ip (t0, har_send, har_wait));
 						let provider_headers = Response.headers res in
 
 						(* Make the response manually to choose the right Encoding *)
@@ -198,7 +186,7 @@ let make_server config =
 					t_dns
 					>>= function
 					| Error server_ip | Ok server_ip ->
-						send_har archive environment req uri_fixed res t_client_body t_provider_body client_ip server_ip (t0, har_send, har_wait)
+						send_har archive environment req uri_fixed client_headers_ready res t_client_body t_provider_body client_ip server_ip (t0, har_send, har_wait)
 			);
 			t_res
 		in

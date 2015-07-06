@@ -4,7 +4,8 @@ open Har_j
 type t_input = {
 	environment: string option;
 	req: Request.t;
-	req_uri: Uri.t; (* Temporary *)
+	req_uri: Uri.t;
+	req_headers: Cohttp.Header.t;
 	res: Response.t;
 	req_length: int;
 	res_length: int;
@@ -21,7 +22,7 @@ module type Sig_make = sig
 	val get_alf : t_get_alf
 	val key : string
 end
-module type Sig_arg = sig val key : bytes end
+module type Sig_arg = sig val key : string end
 
 module Make : functor (X : Sig_arg) -> Sig_make
 

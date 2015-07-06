@@ -17,11 +17,6 @@ let name_value_of_headers tl =
 let length_of_headers raw_headers =
 	raw_headers |> Cohttp.Header.to_lines |> List.fold_left ~init:0 ~f:(fun acc x -> acc+(Bytes.length x))
 
-let set_x_forwarded_for h client_ip =
-	match Cohttp.Header.get h "X-Forwarded-For" with
-	| None -> Cohttp.Header.add h "X-Forwarded-For" client_ip
-	| Some x -> Cohttp.Header.replace h "X-Forwarded-For" (x ^ ", " ^ client_ip)
-
 let get_header_ip h =
 	match Cohttp.Header.get h "X-Real-Ip" with
 	| Some _ as found -> found
@@ -32,6 +27,22 @@ let get_header_ip h =
 			String.split ~on:',' forwarded
 			|> List.hd
 			|> Option.map ~f:String.strip
+	)
+
+let sanitize_headers h client_ip =
+	h
+	|> (fun h -> match Cohttp.Header.get h "Mashape-Host-Override" with
+		| None -> h
+		| Some x -> Cohttp.Header.replace h "Host" x)
+	|> fun h -> Cohttp.Header.remove h "Mashape-Service-Token"
+	|> fun h -> Cohttp.Header.remove h "Mashape-Host-Override"
+	|> fun h -> Cohttp.Header.remove h "Mashape-Environment"
+	|> fun h -> Cohttp.Header.remove h "Mashape-Upstream-Protocol"
+	|> fun h -> Cohttp.Header.remove h "X-Forwarded-Proto"
+	|> fun h -> (
+		match Cohttp.Header.get h "X-Forwarded-For" with
+		| None -> Cohttp.Header.add h "X-Forwarded-For" client_ip
+		| Some x -> Cohttp.Header.replace h "X-Forwarded-For" (x ^ ", " ^ client_ip)
 	)
 
 
