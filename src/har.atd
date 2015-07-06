@@ -1,83 +1,83 @@
 type alf = {
-	version: string;
-	serviceToken: string;
-	?environment: string option;
-	clientIPAddress: string;
-	har: har;
+  version: string;
+  serviceToken: string;
+  ?environment: string option;
+  clientIPAddress: string;
+  har: har;
 }
 
 type har = {
-	log: log;
+  log: log;
 }
 
 type log = {
-	version: string;
-	creator: creator;
-	entries: entry list;
+  version: string;
+  creator: creator;
+  entries: entry list;
 }
 
 type name_value = {
-	name: string;
-	value: string;
+  name: string;
+  value: string;
 }
 
 type creator = {
-	name: string;
-	version: string;
+  name: string;
+  version: string;
 }
 
 type cache = {
-	?x: int option;
+  ?x: int option;
 }
 
 type entry = {
-	serverIPAddress: string;
-	startedDateTime: string;
-	time: int;
-	request: request;
-	response: response;
-	timings: timings;
-	cache: cache;
+  serverIPAddress: string;
+  startedDateTime: string;
+  time: int;
+  request: request;
+  response: response;
+  timings: timings;
+  cache: cache;
 }
 
 type content = {
-	size: int;
-	mimeType: string;
-	?encoding: string option;
-	?text: string option;
+  size: int;
+  mimeType: string;
+  ?encoding: string option;
+  ?text: string option;
 }
 
 type postData = {
-	mimeType: string;
-	?text: string option;
+  mimeType: string;
+  ?text: string option;
 }
 
 type request = {
-	meth <json name="method">: string;
-	url: string;
-	httpVersion: string;
-	queryString: name_value list;
-	headers: name_value list;
-	headersSize: int;
-	cookies: string list;
-	bodySize: int;
-	?postData: postData option;
+  meth <json name="method">: string;
+  url: string;
+  httpVersion: string;
+  queryString: name_value list;
+  headers: name_value list;
+  headersSize: int;
+  cookies: string list;
+  bodySize: int;
+  ?postData: postData option;
 }
 
 type response = {
-	status: int;
-	statusText: string;
-	httpVersion: string;
-	headers: name_value list;
-	headersSize: int;
-	redirectURL: string;
-	cookies: string list;
-	bodySize: int;
-	?content: content option;
+  status: int;
+  statusText: string;
+  httpVersion: string;
+  headers: name_value list;
+  headersSize: int;
+  redirectURL: string;
+  cookies: string list;
+  bodySize: int;
+  ?content: content option;
 }
 
 type timings = {
-	send: int;
-	wait: int;
-	receive: int;
+  send: int;
+  wait: int;
+  receive: int;
 }
