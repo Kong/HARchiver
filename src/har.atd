@@ -73,7 +73,7 @@ type response = {
   redirectURL: string;
   cookies: string list;
   bodySize: int;
-  ?content: content option;
+  content: content;
 }
 
 type timings = {

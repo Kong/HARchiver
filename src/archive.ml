@@ -34,15 +34,12 @@ let get_har_creator = {
 }
 
 let get_har_content headers size b64 =
-  if (size > 0) || (Option.is_some b64)  then
-    Some {
-      size;
-      mimeType = Cohttp.Header.get headers "content-type" |> Option.value ~default:"application/octet-stream";
-      encoding = Option.map ~f:(fun _ -> "base64") b64;
-      text = b64;
-    }
-  else
-    None
+  {
+    size;
+    mimeType = Cohttp.Header.get headers "content-type" |> Option.value ~default:"application/octet-stream";
+    encoding = Option.map ~f:(fun _ -> "base64") b64;
+    text = b64;
+  }
 
 let get_har_postData headers size b64 =
   if (size > 0) || (Option.is_some b64)  then

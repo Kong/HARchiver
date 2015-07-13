@@ -1,7 +1,7 @@
 open Core.Std
 open Lwt
 
-let version = "2.0.2"
+let version = "2.1.0"
 let name = "mashape-analytics-proxy"
 
 let zmq_flush_timeout = 20.
