@@ -1,0 +1,28 @@
+{
+  "private": true,
+  "name": "harchiver",
+  "version": "2.1.0",
+  "description": " Universal Lightweight Proxy for Mashape Analytics",
+  "main": "index.js",
+  "directories": {
+    "test": "test"
+  },
+  "scripts": {
+    "test": "node_modules/.bin/mocha ./test/index.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Mashape/HARchiver.git"
+  },
+  "author": "SGrondin",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/Mashape/HARchiver/issues"
+  },
+  "homepage": "https://github.com/Mashape/HARchiver#readme",
+  "devDependencies": {
+    "mocha": "*",
+    "sleep" : "*",
+    "superagent": "*"
+  }
+}

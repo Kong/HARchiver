@@ -8,7 +8,7 @@ cert:
 	mv server.key server.key.pass
 	openssl rsa -in server.key.pass -out server.key
 	# generate csr
-	openssl req -new -key server.key -out server.csr
+	# openssl req -new -key server.key -out server.csr -subj '/'
 	# generate self singe certificate with csr
 	openssl x509 -req -days 3650 -in server.csr -signkey server.key -out server.crt
 	rm server.csr server.key.pass
@@ -89,6 +89,7 @@ build: clean
 
 package: build
 	$(MAKE) clean
+	# strip -s harchiver
 	patchelf --set-rpath '$$ORIGIN/lib/' harchiver
 	cp harchiver release/
 	cp LICENSE release/
