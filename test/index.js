@@ -1,14 +1,16 @@
 var fs = require('fs')
-var https = require('https')
+var zmq = require('zmq')
 var sleep = require('sleep')
 var request = require('superagent')
 var spawn = require('child_process').spawn
 var exec = require('child_process').exec
 var util = require('util')
+var validate = require('alf-validator')
 var HTTP_PORT = 15555
 var HTTPS_PORT = 15556
+var ZMQ_PORT = 15557
 global.SERVICE_TOKEN = 'defaultServiceToken'
-HTTP_TEST = function(method, path, headers, body, cb) {
+SUPERAGENT = function(method, path, headers, body, cb) {
   var builder = request[method.toLowerCase()](util.format('%s://127.0.0.1:%d/%s', 'http', HTTP_PORT, path))
   for (var h in headers) {
     builder = builder.set(headers[h][0], headers[h][1])
@@ -31,10 +33,47 @@ CURL = function(method, path, headers, body, cb) {
     cb(err, JSON.parse(stdout))
   })
 }
-global.httpTest = function(method, path, headers, body, cb) {return HTTP_TEST(method, path, headers, body, cb)}
-global.httpsTest = function(method, path, headers, body, cb) {return CURL(method, path, headers, body, cb)}
 
-global.harchiver = spawn('./harchiver', [HTTP_PORT+'', SERVICE_TOKEN, '-https', HTTPS_PORT])
+var sock = zmq.socket('pull')
+sock.bindSync(util.format('tcp://*:%s', ZMQ_PORT))
+global.httpTest = function(protocol, method, path, headers, body, cb) {
+  var _err1, _alf = null, _err2 = null, _parsed = null, _result = null
+  sock.removeAllListeners('message')
+  sock.on('message', function(data) {
+    var str = data.toString('utf8')
+    _alf = JSON.parse(str.slice(str.indexOf(' ')))
+    validate.single(_alf, {version:'1.0.0'}, function(err, valid) {
+      _err1 = err != null ? new Error(JSON.stringify(err.errors)) : null
+      if (_parsed != null) cb(_err2 != null ? _err2 : _err1, _parsed, _alf, _result)
+    })
+  })
+  return (protocol.toLowerCase() === 'http' ? SUPERAGENT : CURL)(method, path, headers, body, function(err, parsed, result) {
+    _err2 = err
+    _parsed = parsed
+    _result = result
+    if (_alf != null) cb(_err2 != null ? _err2 : _err1, _parsed, _alf, _result)
+  })
+}
+
+global.getEntry = function(alf) {return alf.har.log.entries[0]}
+global.parseHeaders = function(headers) {
+  var result = {}
+  for (var h in headers) {
+    result[headers[h].name] = headers[h].value
+  }
+  return result
+}
+global.lowerCaseObj = function(obj) {
+  for (var k in obj) {
+    var value = obj[k]
+    var lower = k.toLowerCase()
+    delete obj[k]
+    obj[lower] = value
+  }
+  return obj
+}
+
+global.harchiver = spawn('./harchiver', [HTTP_PORT+'', SERVICE_TOKEN, '-https', HTTPS_PORT, '-host', '127.0.0.1', '-port', ZMQ_PORT])
 
 // Because Node.JS is dumb
 // This is a C++ call that's a blocking sleep to give HARchiver enough time to start.
