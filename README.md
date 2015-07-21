@@ -18,7 +18,7 @@ Make sure to send the `Mashape-Service-Token` header to indicate where to route 
 
 - There's also the `Mashape-Host-Override` header for use when the `Host` header cannot be set, such as in browser XmlHttpRequest *(AJAX)*.
 
-## Installation
+## On-premises Installation
 
 ### Linux *(For OSX and Windows use [Docker](#docker))*
 
