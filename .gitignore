@@ -12,6 +12,7 @@ src/_build/
 node_modules/
 test.ml
 test.js
+test.coffee
 har_*.ml*
 harchiver
 release/

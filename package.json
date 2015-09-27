@@ -1,8 +1,8 @@
 {
   "private": true,
   "name": "harchiver",
-  "version": "2.1.0",
-  "description": " Universal Lightweight Proxy for Mashape Analytics",
+  "version": "2.2.0",
+  "description": " Universal Lightweight Proxy for Galileo",
   "main": "index.js",
   "directories": {
     "test": "test"

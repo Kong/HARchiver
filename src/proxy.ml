@@ -10,7 +10,10 @@ exception Cant_resolve_ip of string * string
 
 let make_server config =
   let nb_current = ref 0 in
-  let sock = Network.get_ZMQ_sock config.zmq_host config.zmq_port in
+  let module Socket = Socket.Make (struct
+    let host = config.zmq_host
+    let port = config.zmq_port
+  end) in
   let global_archive = Option.map ~f:(fun k -> (module Archive.Make (struct let key = k end) : Archive.Sig_make)) config.key in
   let empty_archive = Some (module Archive.Make (struct let key = "" end) : Archive.Sig_make) in
 
@@ -23,7 +26,7 @@ let make_server config =
         let module KeyArchive = (val archive : Archive.Sig_make) in
 
         (* Bypass for XHR *)
-        if KeyArchive.key = "" then return () else
+        if KeyArchive.key = "" then return_unit else
 
         let archive_input = Archive.({
           environment;
@@ -40,20 +43,14 @@ let make_server config =
           timings = (har_send, har_wait, ((get_timestamp_ms ()) - t0 - har_wait));
         }) in
 
-        let har_string = KeyArchive.get_alf archive_input |> string_of_alf |> fun x -> "alf_1.0.0 " ^ x in
-        Lwt.pick [
-          (Lwt_zmq.Socket.send sock har_string
-          >>= fun () ->
-            if config.debug then
-              Lwt_io.printlf "SENT\n%s\n" har_string
-            else
-              return ()
-          );
-          (Lwt_unix.sleep Settings.zmq_flush_timeout
-          >>= fun () ->
-            Lwt_io.printlf "ERROR Could not flush this datapoint to the ZMQ driver within %f seconds:\n%s\n" Settings.zmq_flush_timeout har_string
-          );
-        ]
+        let har_string = KeyArchive.get_alf archive_input |> string_of_alf |> fun x -> Printf.sprintf "%s %s" Settings.alf_version x in
+        Socket.send har_string >>= function
+        | Ok _ ->
+          if config.debug then Lwt_io.printlf "SENT\n%s\n" har_string
+          else return_unit
+        | Error err_str ->
+          ignore (Lwt_io.printl err_str);
+          return_unit
     ) with ex ->
       match ex with
       | e ->
@@ -62,7 +59,7 @@ let make_server config =
     match config.filter_ua with
     | None -> send ()
     | Some filter when Cohttp.Header.get (Request.headers req) "User-Agent" |> Option.value ~default:"" |> Regex.matches filter |> not -> send ()
-    | Some _ -> return ()
+    | Some _ -> return_unit
   in
   let callback (ch, _) req client_body protocol =
     (* Initiate counters and other bookeeping *)
@@ -112,7 +109,7 @@ let make_server config =
         (Uri.host target |> Option.value ~default:"<<no host>>")
         (Uri.port target |> Option.map ~f:Int.to_string |> Option.value ~default:"<<no port>>")
         (Uri.path target)
-      else return ());
+      else return_unit);
 
     (* Start fetching the target IP in advance *)
     let target_to_resolve = target |> Uri.host |> Option.value ~default:"" in
@@ -169,9 +166,9 @@ let make_server config =
       | Too_many_requests ->
         (429, "429: The server is under heavy load, try again")
       | Cant_resolve_ip (err, host) ->
-        (400, "400: Hostname cannot be resolved " ^ err ^ " (" ^ host ^ ")")
+        (400, Printf.sprintf "400: Hostname cannot be resolved %s (%s)" err host)
       | _ ->
-        (500, "500: " ^ Exn.to_string ex)
+        (500, Printf.sprintf "500: %s" (Exn.to_string ex))
       in
       let har_wait = (Archive.get_timestamp_ms ()) - t0 - har_send in
       let t_res =
@@ -182,7 +179,7 @@ let make_server config =
       ignore (t_res >>= fun (res, provider_body) ->
         let t_provider_body = Http_utils.process_body provider_body config.replays in
         match Option.first_some local_archive global_archive with
-        | None -> return ()
+        | None -> return_unit
         | Some archive ->
           t_dns
           >>= function

@@ -17,9 +17,9 @@ cert:
 
 clean:
 	@# For compile.sh
-	@rm -f *.cmi
-	@rm -f *.cmo
-	@rm -f *.cmx
+	@rm -f *.cmi && \
+	rm -f *.cmo && \
+	rm -f *.cmx
 
 	@# For build.sh
 	@pushd src &> /dev/null && \
@@ -52,8 +52,11 @@ compile: clean
 	ocamlfind ocamlc -c cache.mli -thread -package core,lwt && \
 	ocamlfind ocamlc -c cache.ml -thread -package core,lwt && \
 	\
-	ocamlfind ocamlc -c network.mli -thread -package core,cohttp.lwt,lwt-zmq && \
-	ocamlfind ocamlc -c network.ml -thread -package core,cohttp.lwt,lwt-zmq,dns && \
+	ocamlfind ocamlc -c network.mli -thread -package core,cohttp.lwt && \
+	ocamlfind ocamlc -c network.ml -thread -package core,cohttp.lwt,dns && \
+	\
+	ocamlfind ocamlc -c socket.mli -thread -package core,cohttp.lwt,lwt-zmq && \
+	ocamlfind ocamlc -c socket.ml -thread -package core,cohttp.lwt,lwt.syntax,lwt-zmq -syntax camlp4o && \
 	\
 	ocamlfind ocamlc -c proxy.mli -package lwt && \
 	ocamlfind ocamlc -c proxy.ml -thread -package core,lwt.syntax,cohttp.lwt,lwt-zmq -syntax camlp4o && \

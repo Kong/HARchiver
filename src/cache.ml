@@ -73,3 +73,12 @@ let get c ~key ~exp ~thunk =
           ignore_result (Lwt_io.printlf "Race condition: thread is already awake, this shouldn't happen: %s" (Exn.to_string ex));
       ) new_cached.waiting;
       res
+
+let invalidate c key =
+  match Hashtbl.find c key with
+  | Some found -> begin
+    match found.element with
+    | Some el -> Hashtbl.remove c key
+    | None -> ()
+    end
+  | None -> ()

@@ -3,16 +3,6 @@ open Lwt
 
 module CLU = Conduit_lwt_unix
 
-let get_ZMQ_sock zmq_host zmq_port =
-  let remote = "tcp://"^zmq_host^":"^zmq_port in
-  let ctx = ZMQ.Context.create () in
-  let raw_sock = ZMQ.Socket.create ctx ZMQ.Socket.push in
-  print_endline ("Connecting to "^remote^" ...");
-  ZMQ.Socket.connect raw_sock remote;
-  let sock = Lwt_zmq.Socket.of_socket raw_sock in
-  print_endline "Connected.";
-  sock
-
 let get_addr_from_ch = function
 | CLU.TCP {CLU.fd; _} -> begin (* Also contains ip and port *)
   match Lwt_unix.getpeername fd with

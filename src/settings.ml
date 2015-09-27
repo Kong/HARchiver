@@ -1,15 +1,16 @@
 open Core.Std
 open Lwt
 
-let version = "2.1.0"
+let version = "2.2.0"
 let name = "mashape-analytics-proxy"
+let alf_version = "alf_1.0.0"
 
-let zmq_flush_timeout = 20.
+let zmq_flush_timeout = 5.
+let zmq_socket_ttl = 5. *. 60.
 
 let http_error_wait = 0.5
 
 let resolver_pool = 10
-let resolver_timeout = 10. (* Currently unused *)
 let resolver_expire = 30.
 
 let default_concurrent = 500

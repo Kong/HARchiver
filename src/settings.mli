@@ -2,10 +2,11 @@ open Core.Std
 
 val version : string
 val name : string
+val alf_version : string
 val zmq_flush_timeout : float
+val zmq_socket_ttl : float
 val http_error_wait : float
 val resolver_pool : int
-val resolver_timeout : float
 val resolver_expire : float
 val default_concurrent : int
 val default_timeout : float

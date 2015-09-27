@@ -117,13 +117,13 @@ module type Sig_make = sig
 end
 module type Sig_arg = sig val key : string end
 
-module Make (X : Sig_arg) : Sig_make = struct
+module Make (Arg : Sig_arg) : Sig_make = struct
   let get_alf input = {
     version = "1.0.0";
-    serviceToken = X.key;
+    serviceToken = Arg.key;
     environment = input.environment;
     clientIPAddress = input.client_ip;
     har = get_har input;
   }
-  let key = X.key
+  let key = Arg.key
 end

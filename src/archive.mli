@@ -24,7 +24,7 @@ module type Sig_make = sig
 end
 module type Sig_arg = sig val key : string end
 
-module Make : functor (X : Sig_arg) -> Sig_make
+module Make : functor (Arg : Sig_arg) -> Sig_make
 
 val get_timestamp : unit -> int
 val get_timestamp_ms : unit -> int
