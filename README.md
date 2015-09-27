@@ -1,6 +1,6 @@
 # HARchiver
 
-> for more information on Mashape Analytics, please visit [apianalytics.com](https://www.apianalytics.com)
+> for more information on Mashape Galileo, please visit [apianalytics.com](https://www.apianalytics.com)
 
 ## About
 
