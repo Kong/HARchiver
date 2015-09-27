@@ -92,7 +92,7 @@ build: clean
 
 package: build
 	$(MAKE) clean
-	# strip -s harchiver
+	strip -s harchiver
 	patchelf --set-rpath '$$ORIGIN/lib/' harchiver
 	cp harchiver release/
 	cp LICENSE release/
