@@ -1,6 +1,6 @@
-# HARchiver
+# HARchiver has being Deprecated. 
 
-> for more information on Mashape Galileo, please visit [apianalytics.com](https://www.apianalytics.com)
+> for more information on how to collect traffic with Mashape Galileo, please visit [getgalileo.com/docs](http://getgalileo.io/docs/)
 
 ## About
 
