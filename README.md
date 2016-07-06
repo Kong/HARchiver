@@ -2,6 +2,8 @@
 
 > for more information on how to collect traffic with Mashape Galileo, please visit [getgalileo.com/docs](http://getgalileo.io/docs/)
 
+----
+
 ## About
 
 HARchiver is a proxy made to be portable, fast and transparent, it takes incoming HTTP/HTTPS calls and routes them to their final destination, collecting stats in the background without slowing down the request itself.
